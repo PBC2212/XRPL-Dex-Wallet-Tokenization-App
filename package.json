@@ -1,0 +1,60 @@
+{
+  "name": "xrpl-dex-wallet-tokenization-app",
+  "version": "1.0.0",
+  "description": "Production-ready XRPL wallet, tokenization, and trustline management application for real estate and asset tokenization",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js",
+    "test": "node examples/test-all.js",
+    "quick-demo": "node examples/quick-demo.js",
+    "complete-demo": "node examples/complete-demo.js",
+    "wallet-demo": "node examples/wallet-demo.js",
+    "token-demo": "node examples/token-demo.js",
+    "api": "node server/api-server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PBC2212/E-XRPL-Dex-Wallet-Tokenization-App.git"
+  },
+  "keywords": [
+    "xrpl",
+    "blockchain",
+    "tokenization",
+    "real-estate",
+    "wallet",
+    "trustlines",
+    "cryptocurrency",
+    "assets",
+    "fractional-ownership",
+    "defi"
+  ],
+  "author": "PBC2212",
+  "license": "MIT",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/PBC2212/E-XRPL-Dex-Wallet-Tokenization-App/issues"
+  },
+  "homepage": "https://github.com/PBC2212/E-XRPL-Dex-Wallet-Tokenization-App#readme",
+  "dependencies": {
+    "body-parser": "^2.2.0",
+    "cors": "^2.8.5",
+    "crypto-js": "^4.2.0",
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.0.1",
+    "fs-extra": "^11.3.1",
+    "helmet": "^8.1.0",
+    "morgan": "^1.10.1",
+    "qrcode": "^1.5.4",
+    "ws": "^8.18.3",
+    "xrpl": "^4.4.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=7.0.0"
+  }
+}
