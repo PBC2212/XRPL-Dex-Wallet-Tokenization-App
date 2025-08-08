@@ -20,7 +20,8 @@ require('dotenv').config();
 class XRPLApp {
     constructor() {
         this.client = getXRPLClient();
-        this.walletManager = new WalletManager();
+        // FIX: WalletManager is not a constructor, so do NOT use `new`
+        this.walletManager = WalletManager;
         this.tokenIssuer = new TokenIssuer();
         this.trustlineManager = new TrustlineManager();
         this.rl = readline.createInterface({
