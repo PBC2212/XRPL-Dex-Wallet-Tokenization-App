@@ -36,9 +36,9 @@ const WalletManager = ({ currentWallet, onWalletSelect }) => {
     try {
       setLoading(true);
       setMessage({ type: 'info', content: 'Generating secure wallet...' });
-      
+
       const response = await apiService.generateWallet();
-      
+
       if (response && response.success && response.data) {
         setNewWallet(response.data);
         setMessage({ type: 'success', content: 'Wallet generated successfully!' });
@@ -62,9 +62,9 @@ const WalletManager = ({ currentWallet, onWalletSelect }) => {
     try {
       setLoading(true);
       setMessage({ type: 'info', content: 'Importing wallet...' });
-      
+
       const response = await apiService.importWallet(importSeed.trim());
-      
+
       if (response && response.success && response.data) {
         onWalletSelect({
           address: response.data.address,
@@ -119,7 +119,7 @@ const WalletManager = ({ currentWallet, onWalletSelect }) => {
               Refresh Balance
             </button>
           </div>
-          
+
           <div className="grid grid-cols-1 gap-4">
             <div>
               <label className="form-label">Wallet Address</label>
@@ -127,7 +127,7 @@ const WalletManager = ({ currentWallet, onWalletSelect }) => {
                 <div className="code-block flex-1" style={{ marginBottom: 0 }}>
                   {currentWallet.address}
                 </div>
-                <button 
+                <button
                   onClick={() => copyToClipboard(currentWallet.address, 'Address')}
                   className="btn btn-sm btn-secondary"
                 >
@@ -135,7 +135,7 @@ const WalletManager = ({ currentWallet, onWalletSelect }) => {
                 </button>
               </div>
             </div>
-            
+
             {balance && (
               <div>
                 <label className="form-label">Balance</label>
@@ -145,12 +145,9 @@ const WalletManager = ({ currentWallet, onWalletSelect }) => {
               </div>
             )}
           </div>
-          
+
           <div className="mt-4">
-            <button 
-              onClick={() => onWalletSelect(null)}
-              className="btn btn-secondary"
-            >
+            <button onClick={() => onWalletSelect(null)} className="btn btn-secondary">
               Disconnect Wallet
             </button>
           </div>
@@ -168,45 +165,64 @@ const WalletManager = ({ currentWallet, onWalletSelect }) => {
         </div>
       )}
 
-      <div className="card">
-        <div className="flex border-b mb-6">
-          <button
-            onClick={() => setActiveTab('create')}
-            className="px-4 py-2 font-medium border-b-2"
-            style={{ 
-              background: 'none', 
-              border: 'none', 
-              borderBottom: activeTab === 'create' ? '2px solid #3b82f6' : '2px solid transparent',
-              color: activeTab === 'create' ? '#3b82f6' : '#64748b'
-            }}
-          >
-            Create Wallet
-          </button>
-          <button
-            onClick={() => setActiveTab('import')}
-            className="px-4 py-2 font-medium border-b-2 ml-8"
-            style={{ 
-              background: 'none', 
-              border: 'none', 
-              borderBottom: activeTab === 'import' ? '2px solid #3b82f6' : '2px solid transparent',
-              color: activeTab === 'import' ? '#3b82f6' : '#64748b'
-            }}
-          >
-            Import Wallet
-          </button>
-        </div>
+      {/* ✅ New Tab Navigation */}
+      <div
+        style={{
+          display: 'flex',
+          gap: '0.5rem',
+          borderBottom: '2px solid #e2e8f0',
+          marginBottom: '2rem',
+          padding: '0 0 0 0'
+        }}
+      >
+        <button
+          onClick={() => setActiveTab('create')}
+          className="btn"
+          style={{
+            padding: '1rem 2rem',
+            background: activeTab === 'create' ? '#3b82f6' : '#f8fafc',
+            color: activeTab === 'create' ? 'white' : '#64748b',
+            border: `2px solid ${activeTab === 'create' ? '#3b82f6' : '#e2e8f0'}`,
+            borderRadius: '8px 8px 0 0',
+            fontWeight: '600',
+            fontSize: '1rem',
+            cursor: 'pointer',
+            transition: 'all 0.2s',
+            borderBottom: 'none',
+            marginBottom: '-2px'
+          }}
+        >
+          🚀 Create New Wallet
+        </button>
+        <button
+          onClick={() => setActiveTab('import')}
+          className="btn"
+          style={{
+            padding: '1rem 2rem',
+            background: activeTab === 'import' ? '#3b82f6' : '#f8fafc',
+            color: activeTab === 'import' ? 'white' : '#64748b',
+            border: `2px solid ${activeTab === 'import' ? '#3b82f6' : '#e2e8f0'}`,
+            borderRadius: '8px 8px 0 0',
+            fontWeight: '600',
+            fontSize: '1rem',
+            cursor: 'pointer',
+            transition: 'all 0.2s',
+            borderBottom: 'none',
+            marginBottom: '-2px'
+          }}
+        >
+          📥 Import Existing Wallet
+        </button>
+      </div>
 
+      <div className="card">
         {activeTab === 'create' && (
           <div>
             <h3>Create New Wallet</h3>
             <p className="mb-4">Generate a new XRPL wallet with a unique seed phrase</p>
-            
+
             <div className="text-center mb-6">
-              <button 
-                onClick={handleCreateWallet}
-                disabled={loading}
-                className="btn btn-lg btn-primary"
-              >
+              <button onClick={handleCreateWallet} disabled={loading} className="btn btn-lg btn-primary">
                 {loading ? (
                   <>
                     <div className="spinner spinner-sm"></div>
@@ -221,7 +237,7 @@ const WalletManager = ({ currentWallet, onWalletSelect }) => {
             {newWallet && (
               <div className="card" style={{ backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0' }}>
                 <h4 style={{ color: '#059669' }}>Wallet Generated Successfully</h4>
-                
+
                 <div className="alert alert-warning mb-4">
                   <strong>Important:</strong> Save your seed phrase in a secure location. This is the only way to recover your wallet!
                 </div>
@@ -233,10 +249,7 @@ const WalletManager = ({ currentWallet, onWalletSelect }) => {
                       <div className="code-block flex-1" style={{ marginBottom: 0 }}>
                         {newWallet.address}
                       </div>
-                      <button 
-                        onClick={() => copyToClipboard(newWallet.address, 'Address')}
-                        className="btn btn-sm btn-secondary"
-                      >
+                      <button onClick={() => copyToClipboard(newWallet.address, 'Address')} className="btn btn-sm btn-secondary">
                         Copy
                       </button>
                     </div>
@@ -248,10 +261,7 @@ const WalletManager = ({ currentWallet, onWalletSelect }) => {
                       <div className="code-block code-block-danger flex-1" style={{ marginBottom: 0 }}>
                         {newWallet.seed}
                       </div>
-                      <button 
-                        onClick={() => copyToClipboard(newWallet.seed, 'Seed phrase')}
-                        className="btn btn-sm btn-secondary"
-                      >
+                      <button onClick={() => copyToClipboard(newWallet.seed, 'Seed phrase')} className="btn btn-sm btn-secondary">
                         Copy
                       </button>
                     </div>
@@ -263,10 +273,7 @@ const WalletManager = ({ currentWallet, onWalletSelect }) => {
                       <div className="code-block flex-1" style={{ marginBottom: 0 }}>
                         {newWallet.publicKey}
                       </div>
-                      <button 
-                        onClick={() => copyToClipboard(newWallet.publicKey, 'Public key')}
-                        className="btn btn-sm btn-secondary"
-                      >
+                      <button onClick={() => copyToClipboard(newWallet.publicKey, 'Public key')} className="btn btn-sm btn-secondary">
                         Copy
                       </button>
                     </div>
@@ -274,16 +281,10 @@ const WalletManager = ({ currentWallet, onWalletSelect }) => {
                 </div>
 
                 <div className="flex gap-3 mt-4">
-                  <button 
-                    onClick={() => handleSelectWallet(newWallet)}
-                    className="btn btn-success"
-                  >
+                  <button onClick={() => handleSelectWallet(newWallet)} className="btn btn-success">
                     Use This Wallet
                   </button>
-                  <button 
-                    onClick={() => setNewWallet(null)}
-                    className="btn btn-secondary"
-                  >
+                  <button onClick={() => setNewWallet(null)} className="btn btn-secondary">
                     Generate Another
                   </button>
                 </div>
@@ -308,17 +309,11 @@ const WalletManager = ({ currentWallet, onWalletSelect }) => {
                 disabled={loading}
                 style={{ fontFamily: 'monospace' }}
               />
-              <div className="form-text">
-                Enter your 12-24 word recovery phrase or hex seed
-              </div>
+              <div className="form-text">Enter your 12–24 word recovery phrase or hex seed</div>
             </div>
 
             <div className="text-center">
-              <button 
-                onClick={handleImportWallet}
-                disabled={loading || !importSeed.trim()}
-                className="btn btn-lg btn-primary"
-              >
+              <button onClick={handleImportWallet} disabled={loading || !importSeed.trim()} className="btn btn-lg btn-primary">
                 {loading ? (
                   <>
                     <div className="spinner spinner-sm"></div>

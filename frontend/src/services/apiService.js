@@ -29,7 +29,7 @@ api.interceptors.response.use(
   },
   (error) => {
     console.error('API Error:', error.response?.data || error.message);
-    
+
     if (error.response?.data?.message) {
       throw new Error(error.response.data.message);
     } else if (error.response?.data?.error) {
@@ -60,9 +60,9 @@ const apiService = {
       if (!seed || !seed.trim()) {
         throw new Error('Seed phrase is required');
       }
-      
-      const response = await api.post('/wallets/import', { 
-        seed: seed.trim() 
+
+      const response = await api.post('/wallets/import', {
+        seed: seed.trim(),
       });
       return response;
     } catch (error) {
@@ -126,6 +126,18 @@ const apiService = {
     }
   },
 
+  // Create token
+  async createToken(tokenData) {
+    try {
+      console.log('Creating token:', tokenData.tokenCode);
+      const response = await api.post('/tokens', tokenData);
+      return response;
+    } catch (error) {
+      console.error('Create token error:', error);
+      throw error;
+    }
+  },
+
   // Utility functions
   formatXRP(amount) {
     if (!amount) return '0.000000 XRP';
@@ -155,23 +167,23 @@ const apiService = {
   isValidSeed(seed) {
     if (!seed || typeof seed !== 'string') return false;
     const trimmed = seed.trim();
-    
+
     // Check for XRPL encoded seed (starts with 's')
     if (/^s[1-9A-HJ-NP-Za-km-z]{28,29}$/.test(trimmed)) {
       return true;
     }
-    
+
     // Check for hex seed (64 characters)
     if (/^[A-Fa-f0-9]{64}$/.test(trimmed)) {
       return true;
     }
-    
+
     // Check for mnemonic phrase (12-24 words)
     const words = trimmed.split(/\s+/);
     if (words.length >= 12 && words.length <= 24) {
-      return words.every(word => word.length >= 2 && /^[a-zA-Z]+$/.test(word));
+      return words.every((word) => word.length >= 2 && /^[a-zA-Z]+$/.test(word));
     }
-    
+
     return false;
   },
 
@@ -184,12 +196,12 @@ const apiService = {
         month: 'short',
         day: 'numeric',
         hour: '2-digit',
-        minute: '2-digit'
+        minute: '2-digit',
       });
     } catch (error) {
       return 'Invalid Date';
     }
-  }
+  },
 };
 
 export default apiService;
