@@ -292,6 +292,37 @@ function isValidUrl(url) {
     }
 }
 
+/**
+ * Validate currency code for XRPL
+ * @param {string} currencyCode - Currency code to validate  
+ * @returns {Object} Validation result
+ */
+function validateCurrencyCode(currencyCode) {
+    const errors = [];
+    
+    if (!currencyCode || typeof currencyCode !== 'string') {
+        errors.push('Currency code is required');
+        return { isValid: false, error: errors[0] };
+    }
+
+    const code = currencyCode.trim().toUpperCase();
+    
+    // XRPL currency codes must be 3 characters and alphanumeric only
+    if (code.length !== 3) {
+        errors.push('Currency code must be exactly 3 characters');
+    } else if (!/^[A-Z]{3}$/.test(code)) {
+        errors.push('Currency code must contain only letters A-Z');
+    } else if (code === 'XRP') {
+        errors.push('Cannot use XRP as currency code');
+    }
+
+    return {
+        isValid: errors.length === 0,
+        error: errors[0] || null,
+        currencyCode: code
+    };
+}
+
 module.exports = {
     isValidAddress,
     isValidSeed,
@@ -301,5 +332,6 @@ module.exports = {
     isValidEmail,
     validatePassword,
     sanitizeString,
-    isValidUrl
+    isValidUrl,
+    validateCurrencyCode // ← Added this line
 };

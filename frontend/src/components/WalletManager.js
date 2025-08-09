@@ -67,6 +67,7 @@ const WalletManager = ({ currentWallet, onWalletSelect }) => {
 
       if (response && response.success && response.data) {
         onWalletSelect({
+          id: response.data.id,       // ← Added this line
           address: response.data.address,
           publicKey: response.data.publicKey,
           imported: true
@@ -87,6 +88,7 @@ const WalletManager = ({ currentWallet, onWalletSelect }) => {
 
   const handleSelectWallet = (wallet) => {
     onWalletSelect({
+      id: wallet.id,              // ← Added this line
       address: wallet.address,
       publicKey: wallet.publicKey,
       seed: wallet.seed

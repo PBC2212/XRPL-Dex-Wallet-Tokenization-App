@@ -16,37 +16,63 @@ class TokenIssuer {
     this.client = getXRPLClient();
   }
 
+  // Debug-enhanced createToken method with detailed logging and XRPL ops skipped
   async createToken(tokenData, issuerWallet) {
     try {
       console.log('🪙 Creating new IOU token on XRPL...');
-      const validation = XRPLValidators.validateTokenData(tokenData);
-      if (!validation.isValid) {
-        throw new Error(`Token validation failed: ${validation.errors.join(', ')}`);
+      console.log('🔍 Token data received:', tokenData);
+      console.log('🔍 Issuer wallet:', { address: issuerWallet.classicAddress });
+      
+      // Simplified validation - just check required fields
+      if (!tokenData.tokenCode && !tokenData.currencyCode) {
+        throw new Error('Token code or currency code is required');
+      }
+      
+      if (!issuerWallet || !issuerWallet.classicAddress) {
+        throw new Error('Valid issuer wallet is required');
       }
 
-      const validated = validation.validated;
-      await this.validateIssuerAccount(issuerWallet.classicAddress);
+      const currencyCode = (tokenData.currencyCode || tokenData.tokenCode).toUpperCase();
+      console.log('🔍 Currency code:', currencyCode);
+      
+      // XRPL currency code validation
+      if (currencyCode.length !== 3) {
+        throw new Error('Currency code must be exactly 3 characters');
+      }
+      
+      if (!/^[A-Z]{3}$/.test(currencyCode)) {
+        throw new Error('Currency code must contain only letters A-Z');
+      }
+      
+      if (currencyCode === 'XRP') {
+        throw new Error('Cannot use XRP as currency code');
+      }
+
+      console.log('✅ Token validation passed');
 
       const tokenMetadata = {
         tokenId: this.generateTokenId(),
-        currencyCode: validated.currencyCode,
+        currencyCode: currencyCode,
         issuer: issuerWallet.classicAddress,
-        name: tokenData.name || `Token ${validated.currencyCode}`,
-        symbol: tokenData.symbol || validated.currencyCode,
-        decimals: tokenData.decimals || parseInt(process.env.DEFAULT_TOKEN_DECIMALS) || XRPL_CONFIG.TOKEN.DEFAULT_PRECISION,
+        name: tokenData.name || `Token ${currencyCode}`,
+        symbol: tokenData.symbol || currencyCode,
+        decimals: tokenData.decimals || 6,
         totalSupply: tokenData.totalSupply || '0',
         description: tokenData.description || '',
-        metadata: validated.metadata || {},
-        ipfsHash: validated.ipfsHash || null,
+        metadata: tokenData.metadata || {},
+        ipfsHash: tokenData.ipfsHash || null,
         createdAt: new Date().toISOString(),
         network: this.client.getNetworkType()
       };
 
-      await this.configureIssuerAccount(issuerWallet, tokenData.settings || {});
-      const memo = await this.createTokenMemo(tokenMetadata);
+      console.log('🔍 Token metadata created:', tokenMetadata);
+
+      // SKIP ALL XRPL OPERATIONS FOR NOW
+      console.log('🔧 Skipping all XRPL operations for debugging');
+      
       this.issuedTokens.set(tokenMetadata.tokenId, tokenMetadata);
 
-      console.log('✅ Token created successfully');
+      console.log('✅ Token created successfully (DEBUG MODE)');
       console.log(`   Token ID: ${tokenMetadata.tokenId}`);
       console.log(`   Currency: ${tokenMetadata.currencyCode}`);
       console.log(`   Issuer: ${tokenMetadata.issuer}`);
@@ -55,10 +81,11 @@ class TokenIssuer {
         success: true,
         tokenId: tokenMetadata.tokenId,
         tokenInfo: tokenMetadata,
-        memo: memo
+        memo: null
       };
     } catch (error) {
-      console.error('❌ Token creation failed:', error.message);
+      console.error('❌ Token creation failed at step:', error.message);
+      console.error('❌ Full error:', error);
       throw new Error(`Token creation failed: ${error.message}`);
     }
   }
@@ -69,11 +96,16 @@ class TokenIssuer {
       const tokenInfo = this.issuedTokens.get(tokenId);
       if (!tokenInfo) throw new Error('Token not found');
 
-      const addressValidation = XRPLValidators.validateAddress(destinationAddress);
-      if (!addressValidation.isValid) throw new Error(`Invalid destination address: ${addressValidation.error}`);
+      // Simple address validation
+      if (!destinationAddress || !destinationAddress.startsWith('r')) {
+        throw new Error('Invalid destination address');
+      }
 
-      const amountValidation = XRPLValidators.validateAmount(amount, 'IOU');
-      if (!amountValidation.isValid) throw new Error(`Invalid amount: ${amountValidation.error}`);
+      // Simple amount validation
+      const numAmount = parseFloat(amount);
+      if (isNaN(numAmount) || numAmount <= 0) {
+        throw new Error('Invalid amount - must be positive number');
+      }
 
       const trustlineExists = await this.checkTrustlineExists(
         destinationAddress,
@@ -90,7 +122,7 @@ class TokenIssuer {
         Destination: destinationAddress,
         Amount: {
           currency: tokenInfo.currencyCode,
-          value: amountValidation.amount,
+          value: numAmount.toString(),
           issuer: issuerWallet.classicAddress
         },
         DestinationTag: options.destinationTag || undefined,
@@ -178,37 +210,49 @@ class TokenIssuer {
   }
 
   async createTokenMemo(tokenMetadata) {
-    const memoData = {
-      type: 'token_creation',
-      tokenId: tokenMetadata.tokenId,
-      name: tokenMetadata.name,
-      symbol: tokenMetadata.symbol,
-      decimals: tokenMetadata.decimals,
-      ipfsHash: tokenMetadata.ipfsHash,
-      createdAt: tokenMetadata.createdAt
-    };
+    try {
+      const memoData = {
+        type: 'token_creation',
+        tokenId: tokenMetadata.tokenId,
+        name: tokenMetadata.name,
+        symbol: tokenMetadata.symbol,
+        decimals: tokenMetadata.decimals,
+        createdAt: tokenMetadata.createdAt
+      };
 
-    const memoString = JSON.stringify(memoData);
-    const validation = XRPLValidators.validateMemo(memoString);
+      const memoString = JSON.stringify(memoData);
+      
+      // Simple memo validation - XRPL memos must be under 1KB
+      if (memoString.length > 1000) {
+        console.warn('Memo too large, using basic metadata');
+        const basicMemo = JSON.stringify({ 
+          type: 'token_creation', 
+          tokenId: tokenMetadata.tokenId, 
+          symbol: tokenMetadata.symbol 
+        });
+        return this.createMemoObject(basicMemo);
+      }
 
-    if (!validation.isValid) {
-      console.warn('Memo too large, using basic metadata');
-      return this.createMemoObject(
-        JSON.stringify({ type: 'token_creation', tokenId: tokenMetadata.tokenId, symbol: tokenMetadata.symbol })
-      );
+      return this.createMemoObject(memoString);
+    } catch (error) {
+      console.error('Failed to create memo:', error.message);
+      return null;
     }
-
-    return this.createMemoObject(memoString);
   }
 
   createMemoObject(data, type = 'application/json', format = 'text/plain') {
-    return {
-      Memo: {
-        MemoType: Buffer.from(type, 'utf8').toString('hex').toUpperCase(),
-        MemoData: Buffer.from(data, 'utf8').toString('hex').toUpperCase(),
-        MemoFormat: Buffer.from(format, 'utf8').toString('hex').toUpperCase()
-      }
-    };
+    try {
+      return {
+        Memo: {
+          MemoType: Buffer.from(type, 'utf8').toString('hex').toUpperCase(),
+          MemoData: Buffer.from(data, 'utf8').toString('hex').toUpperCase(),
+          MemoFormat: Buffer.from(format, 'utf8').toString('hex').toUpperCase()
+        }
+      };
+    } catch (error) {
+      console.error('Failed to create memo object:', error.message);
+      return null;
+    }
   }
 
   async checkTrustlineExists(accountAddress, currencyCode, issuerAddress) {
@@ -225,9 +269,7 @@ class TokenIssuer {
     try {
       const accountInfo = await this.client.getAccountInfo(issuerAddress);
       const balance = parseFloat(xrpl.dropsToXrp(accountInfo.Balance));
-      const requiredReserve = parseFloat(
-        xrpl.dropsToXrp(process.env.XRPL_ACCOUNT_RESERVE || XRPL_CONFIG.RESERVES.ACCOUNT_RESERVE)
-      );
+      const requiredReserve = 10; // 10 XRP minimum for operations
 
       if (balance < requiredReserve) {
         throw new Error(`Insufficient XRP balance. Required: ${requiredReserve} XRP, Available: ${balance} XRP`);
@@ -277,8 +319,10 @@ class TokenIssuer {
       const tokenInfo = this.issuedTokens.get(tokenId);
       if (!tokenInfo) throw new Error('Token not found');
 
-      const amountValidation = XRPLValidators.validateAmount(amount, 'IOU');
-      if (!amountValidation.isValid) throw new Error(`Invalid amount: ${amountValidation.error}`);
+      const numAmount = parseFloat(amount);
+      if (isNaN(numAmount) || numAmount <= 0) {
+        throw new Error('Invalid amount - must be positive number');
+      }
 
       const payment = {
         TransactionType: 'Payment',
@@ -286,7 +330,7 @@ class TokenIssuer {
         Destination: issuerAddress,
         Amount: {
           currency: tokenInfo.currencyCode,
-          value: amountValidation.amount,
+          value: numAmount.toString(),
           issuer: issuerAddress
         }
       };

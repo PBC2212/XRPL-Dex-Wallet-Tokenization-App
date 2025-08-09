@@ -1,0 +1,16 @@
+{
+  "id": "wallet_1754779523247_2d9d250c",
+  "address": "r3Es7APBAEXSMyNmAqdCiyieQncehVoG96",
+  "publicKey": "EDD2601EB58934307AB09FDA5290EB601B9925378E28CCB9D2511D175E2236A4B9",
+  "network": "TESTNET",
+  "createdAt": "2025-08-09T22:45:23.247Z",
+  "metadata": {
+    "name": "Wallet 2d9d250c",
+    "description": "",
+    "tags": []
+  },
+  "encrypted": {
+    "privateKey": "ED636297F29E5EA6396EE1A15F974D6791B864C16A983105F53DB2025F1114B405",
+    "seed": "sEdVQwvhToh3wS27H8wccanvupAq5ZH"
+  }
+}

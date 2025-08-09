@@ -63,6 +63,12 @@ const TokenCreator = ({ currentWallet }) => {
       return;
     }
 
+    // Check if wallet has ID (required for production-secure token creation)
+    if (!currentWallet.id) {
+      showMessage('error', 'Wallet missing ID. Please reconnect your wallet.');
+      return;
+    }
+
     const validationErrors = validateForm();
     if (validationErrors.length > 0) {
       showMessage('error', validationErrors[0]);
@@ -82,14 +88,23 @@ const TokenCreator = ({ currentWallet }) => {
         issuer: currentWallet.address
       };
 
-      // Create token using the API
+      // Create token using production-secure API (no seeds transmitted)
       const response = await apiService.createToken({
-        issuerSeed: currentWallet.seed,
+        issuerWalletId: currentWallet.id,                    // ← SECURE: Wallet ID instead of seed
         tokenCode: formData.tokenCode.toUpperCase(),
+        currencyCode: formData.tokenCode.toUpperCase(),      // ← Add both for compatibility
+        name: formData.tokenName,                            // ← Direct field mapping
+        symbol: formData.tokenCode.toUpperCase(),            // ← Add symbol
+        description: formData.description,                   // ← Direct field mapping
+        decimals: 6,                                         // ← Standard XRPL precision
         totalSupply: parseInt(formData.totalSupply),
         metadata: metadata,
         transferFee: parseFloat(formData.transferFee) || 0,
-        requireAuth: formData.requireAuth
+        requireAuth: formData.requireAuth,
+        settings: {                                          // ← Additional settings
+          defaultRipple: false,
+          requireAuth: formData.requireAuth
+        }
       });
 
       if (response && response.success) {
@@ -111,11 +126,12 @@ const TokenCreator = ({ currentWallet }) => {
           requireAuth: false
         });
       } else {
-        throw new Error('Failed to create token');
+        throw new Error(response?.message || 'Failed to create token');
       }
     } catch (error) {
       console.error('Token creation error:', error);
-      showMessage('error', `Token creation failed: ${error.message}`);
+      const errorMessage = error.response?.data?.message || error.message || 'Unknown error occurred';
+      showMessage('error', `Token creation failed: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
@@ -169,18 +185,28 @@ const TokenCreator = ({ currentWallet }) => {
         <h4 style={{ color: '#059669', marginBottom: '0.5rem' }}>
           Connected Wallet
         </h4>
-        <p style={{ marginBottom: 0, fontFamily: 'monospace', fontSize: '0.9rem' }}>
-          {currentWallet.address}
+        <p style={{ marginBottom: '0.25rem', fontFamily: 'monospace', fontSize: '0.9rem' }}>
+          <strong>Address:</strong> {currentWallet.address}
         </p>
+        {currentWallet.id && (
+          <p style={{ marginBottom: 0, fontFamily: 'monospace', fontSize: '0.8rem', color: '#6b7280' }}>
+            <strong>Wallet ID:</strong> {currentWallet.id}
+          </p>
+        )}
+        {!currentWallet.id && (
+          <div className="alert alert-warning" style={{ margin: '0.5rem 0 0 0', padding: '0.5rem' }}>
+            <small>⚠️ Wallet missing ID - please reconnect for token creation</small>
+          </div>
+        )}
       </div>
 
       {/* Status Messages */}
       {message.content && (
         <div className={`alert alert-${message.type}`} style={{ marginBottom: '2rem' }}>
           <strong>
-            {message.type === 'success' && 'Success: '}
-            {message.type === 'error' && 'Error: '}
-            {message.type === 'info' && 'Info: '}
+            {message.type === 'success' && '✅ Success: '}
+            {message.type === 'error' && '❌ Error: '}
+            {message.type === 'info' && 'ℹ️ Info: '}
           </strong>
           {message.content}
         </div>
@@ -190,7 +216,7 @@ const TokenCreator = ({ currentWallet }) => {
       <div className="card">
         <div className="card-header">
           <h3>Create New Token</h3>
-          <p>Tokenize your asset on the XRPL blockchain</p>
+          <p>Tokenize your asset on the XRPL blockchain (Production-Secure)</p>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
@@ -320,11 +346,17 @@ const TokenCreator = ({ currentWallet }) => {
           </div>
         </div>
 
+        {/* Security Notice */}
+        <div className="alert alert-info" style={{ marginTop: '1rem' }}>
+          <strong>🔒 Production Security:</strong> Your wallet credentials never leave your device. 
+          Token creation uses secure wallet IDs for maximum protection.
+        </div>
+
         {/* Create Button */}
         <div style={{ textAlign: 'center', marginTop: '2rem' }}>
           <button 
             onClick={handleCreateToken}
-            disabled={loading}
+            disabled={loading || !currentWallet?.id}
             className="btn btn-lg btn-primary"
             style={{ fontSize: '1.1rem', padding: '1rem 2.5rem' }}
           >
@@ -333,6 +365,8 @@ const TokenCreator = ({ currentWallet }) => {
                 <div className="spinner"></div>
                 Creating Token...
               </>
+            ) : !currentWallet?.id ? (
+              '🔐 Reconnect Wallet Required'
             ) : (
               '🚀 Create Token on XRPL'
             )}
@@ -414,14 +448,37 @@ const TokenCreator = ({ currentWallet }) => {
                 </button>
               </div>
             </div>
+
+            {/* Token ID Display (if available) */}
+            {createdToken.tokenId && (
+              <div style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                padding: '1rem',
+                borderRadius: '8px'
+              }}>
+                <label className="form-label">Token ID</label>
+                <div className="flex gap-2">
+                  <div className="code-block flex-1" style={{ marginBottom: 0, fontSize: '0.9rem' }}>
+                    {createdToken.tokenId}
+                  </div>
+                  <button 
+                    onClick={() => copyToClipboard(createdToken.tokenId, 'Token ID')}
+                    className="btn btn-sm btn-secondary"
+                  >
+                    Copy
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="mt-4">
             <div className="alert alert-info">
-              <strong>Next Steps:</strong><br/>
-              • Your token is now live on the XRPL<br/>
+              <strong>🎯 Next Steps:</strong><br/>
+              • Your token is now live on the XRPL blockchain<br/>
               • Investors can create trustlines to hold your token<br/>
-              • You can issue tokens to investors through the Investment Portal
+              • You can issue tokens to investors through the Investment Portal<br/>
+              • All transactions are secured with production-grade encryption
             </div>
           </div>
 

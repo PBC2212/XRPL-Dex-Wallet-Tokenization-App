@@ -1,0 +1,16 @@
+{
+  "id": "wallet_1754781021236_e5508726",
+  "address": "rhEztcKaxQ5S3VX7Sc1xgq56ddwuq3hYdC",
+  "publicKey": "EDE342A6D8517F384DE7B678FEBD0F852298CF771A7BDA586950037D5695EB8928",
+  "network": "TESTNET",
+  "createdAt": "2025-08-09T23:10:21.237Z",
+  "metadata": {
+    "name": "Wallet e5508726",
+    "description": "",
+    "tags": []
+  },
+  "encrypted": {
+    "privateKey": "EDD4AB8E9BBE201BFD811809E150D448498FAA35C0F590E5FE7FB658EA9FDECB2E",
+    "seed": "sEdSvspq2xwc6DRwbjjRgtR5K26fjdm"
+  }
+}

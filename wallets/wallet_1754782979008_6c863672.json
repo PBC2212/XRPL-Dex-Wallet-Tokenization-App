@@ -1,0 +1,16 @@
+{
+  "id": "wallet_1754782979008_6c863672",
+  "address": "rL3MbJKdce5oPQksB7Jghv9ieRyS7ipcPP",
+  "publicKey": "ED491C1D8C90CB8C20965DB648B8F27368D3212F266334A7B8C1D4CBDDBAFA39D8",
+  "network": "TESTNET",
+  "createdAt": "2025-08-09T23:42:59.008Z",
+  "metadata": {
+    "name": "Wallet 6c863672",
+    "description": "",
+    "tags": []
+  },
+  "encrypted": {
+    "privateKey": "ED11DDA155AFB373B39A670350477ABE8FE403211B00C36230C332FD044530BADF",
+    "seed": "sEdSyjjePkg3KNVJptx22TyrY5uTpfG"
+  }
+}
