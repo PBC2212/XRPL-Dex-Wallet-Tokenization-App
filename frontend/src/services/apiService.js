@@ -1,8 +1,8 @@
 import axios from 'axios';
 
-// Create axios instance
+// Create axios instance with production URL support
 const api = axios.create({
-  baseURL: 'http://localhost:3001/api',
+  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:3001/api',
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
@@ -221,10 +221,23 @@ const apiService = {
   // NEW: WEBSOCKET CONNECTION
   // ================================
 
-  // WebSocket connection (NEW)
+  // WebSocket connection (NEW) with production support
   connectWebSocket(onMessage, onError) {
     try {
-      const wsUrl = 'ws://localhost:3001/ws';
+      // Determine WebSocket URL based on environment
+      const isProduction = process.env.NODE_ENV === 'production' || window.location.hostname !== 'localhost';
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+      
+      let wsUrl;
+      if (isProduction) {
+        // In production, convert HTTPS API URL to WSS WebSocket URL
+        wsUrl = apiUrl.replace('https://', 'wss://').replace('/api', '/ws');
+      } else {
+        // In development, use localhost WebSocket
+        wsUrl = 'ws://localhost:3001/ws';
+      }
+
+      console.log('Connecting to WebSocket:', wsUrl);
       const ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {

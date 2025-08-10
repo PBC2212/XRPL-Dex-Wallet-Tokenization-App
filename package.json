@@ -2,16 +2,21 @@
   "name": "xrpl-dex-wallet-tokenization-app",
   "version": "1.0.0",
   "description": "Production-ready XRPL wallet, tokenization, and trustline management application for real estate and asset tokenization",
-  "main": "src/app.js",
+  "main": "start.js",
   "scripts": {
-    "start": "node src/app.js",
+    "start": "node start.js",
     "dev": "nodemon src/app.js",
+    "api": "node server/api-server.js",
+    "api-dev": "nodemon server/api-server.js",
+    "frontend": "cd frontend && npm start",
+    "build": "cd frontend && npm install && npm run build",
+    "deploy": "npm run build",
+    "postinstall": "cd frontend && npm install",
     "test": "node examples/test-all.js",
     "quick-demo": "node examples/quick-demo.js",
     "complete-demo": "node examples/complete-demo.js",
     "wallet-demo": "node examples/wallet-demo.js",
-    "token-demo": "node examples/token-demo.js",
-    "api": "node server/api-server.js"
+    "token-demo": "node examples/token-demo.js"
   },
   "repository": {
     "type": "git",
@@ -27,7 +32,9 @@
     "cryptocurrency",
     "assets",
     "fractional-ownership",
-    "defi"
+    "defi",
+    "investment-portal",
+    "web-app"
   ],
   "author": "PBC2212",
   "license": "MIT",

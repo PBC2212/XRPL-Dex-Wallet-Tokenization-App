@@ -1,0 +1,63 @@
+services:
+  # Backend API Service
+  - type: web
+    name: xrpl-tokenization-api
+    runtime: node
+    plan: starter
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: XRPL_NETWORK
+        value: TESTNET
+      - key: XRPL_TESTNET_URL
+        value: wss://s.altnet.rippletest.net:51233
+      - key: XRPL_MAINNET_URL
+        value: wss://xrplcluster.com
+      - key: XRPL_DEFAULT_FEE
+        value: 12
+      - key: XRPL_MAX_FEE
+        value: 100
+      - key: XRPL_TRANSACTION_TIMEOUT
+        value: 30
+      - key: XRPL_ACCOUNT_RESERVE
+        value: 10000000
+      - key: XRPL_OBJECT_RESERVE
+        value: 2000000
+      - key: XRPL_TRUSTLINE_RESERVE
+        value: 2000000
+      - key: DEFAULT_CURRENCY_CODE
+        value: USD
+      - key: DEFAULT_TOKEN_NAME
+        value: MyToken
+      - key: DEFAULT_TOKEN_SYMBOL
+        value: MTK
+      - key: DEFAULT_TOKEN_DECIMALS
+        value: 6
+      - key: DEFAULT_TRUSTLINE_LIMIT
+        value: 1000000000
+      - key: APP_NAME
+        value: XRPL-Tokenization-App
+      - key: APP_VERSION
+        value: 1.0.0
+      - key: LOG_LEVEL
+        value: info
+      - key: WALLET_PBKDF2_ITERATIONS
+        value: 100000
+      - key: WALLET_SALT_LENGTH
+        value: 32
+      - key: WALLET_IV_LENGTH
+        value: 16
+    healthCheckPath: /health
+
+  # Frontend Static Site
+  - type: static_site
+    name: xrpl-tokenization-frontend
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: ./frontend/build
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: REACT_APP_API_URL
+        value: https://xrpl-tokenization-api.onrender.com
