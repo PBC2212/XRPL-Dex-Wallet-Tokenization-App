@@ -1,12 +1,10 @@
 /**
- * Simplified Production Server for Render Deployment
- * Focuses on core functionality with robust error handling
+ * Fixed Production Server for Render Deployment
+ * Simplified routing to avoid path-to-regexp issues
  */
 
 const express = require('express');
 const cors = require('cors');
-const helmet = require('helmet');
-const morgan = require('morgan');
 const path = require('path');
 const fs = require('fs');
 
@@ -20,22 +18,20 @@ class ProductionServer {
     }
 
     setupBasicMiddleware() {
-        // Security and basic middleware
-        this.app.use(helmet({
-            contentSecurityPolicy: false,
-            crossOriginEmbedderPolicy: false
-        }));
-
-        this.app.use(cors({
-            origin: true,
-            credentials: true,
-            methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-            allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
-        }));
+        // Basic CORS
+        this.app.use((req, res, next) => {
+            res.header('Access-Control-Allow-Origin', '*');
+            res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+            res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+            if (req.method === 'OPTIONS') {
+                res.sendStatus(200);
+            } else {
+                next();
+            }
+        });
 
         this.app.use(express.json({ limit: '10mb' }));
         this.app.use(express.urlencoded({ extended: true }));
-        this.app.use(morgan('combined'));
 
         // Serve static files from frontend build
         const frontendBuildPath = path.join(__dirname, '../frontend/build');
@@ -43,7 +39,7 @@ class ProductionServer {
             console.log('✅ Serving frontend from:', frontendBuildPath);
             this.app.use(express.static(frontendBuildPath));
         } else {
-            console.log('⚠️ Frontend build directory not found');
+            console.log('⚠️ Frontend build directory not found at:', frontendBuildPath);
         }
     }
 
@@ -77,10 +73,9 @@ class ProductionServer {
             });
         });
 
-        // Basic wallet generation endpoint (simplified)
+        // Basic wallet generation endpoint
         this.app.post('/api/wallets', (req, res) => {
             try {
-                // Generate a mock wallet for now
                 const mockWallet = {
                     id: `wallet_${Date.now()}`,
                     address: `r${Math.random().toString(36).substr(2, 25)}`,
@@ -110,7 +105,69 @@ class ProductionServer {
             }
         });
 
-        // Basic token creation endpoint (simplified)
+        // Wallet import endpoint
+        this.app.post('/api/wallets/import', (req, res) => {
+            try {
+                const { seed } = req.body;
+                if (!seed) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Seed phrase is required',
+                        message: 'Missing required field'
+                    });
+                }
+
+                const mockWallet = {
+                    id: `wallet_${Date.now()}`,
+                    address: `r${Math.random().toString(36).substr(2, 25)}`,
+                    publicKey: `ED${Math.random().toString(16).substr(2, 64).toUpperCase()}`,
+                    network: 'TESTNET',
+                    metadata: {
+                        name: 'Imported Wallet',
+                        description: 'Imported from seed'
+                    }
+                };
+
+                res.json({
+                    success: true,
+                    data: mockWallet,
+                    message: 'Wallet imported successfully (demo mode)'
+                });
+            } catch (error) {
+                res.status(500).json({
+                    success: false,
+                    error: error.message,
+                    message: 'Failed to import wallet'
+                });
+            }
+        });
+
+        // Wallet balance endpoint
+        this.app.get('/api/wallets/:address/balance', (req, res) => {
+            try {
+                const { address } = req.params;
+                res.json({
+                    success: true,
+                    data: {
+                        address: address,
+                        xrpBalance: (Math.random() * 1000).toFixed(6),
+                        accountData: {
+                            Sequence: Math.floor(Math.random() * 100) + 1,
+                            OwnerCount: Math.floor(Math.random() * 10)
+                        }
+                    },
+                    message: 'Balance retrieved successfully (demo mode)'
+                });
+            } catch (error) {
+                res.status(500).json({
+                    success: false,
+                    error: error.message,
+                    message: 'Failed to retrieve balance'
+                });
+            }
+        });
+
+        // Token creation endpoint
         this.app.post('/api/tokens', (req, res) => {
             try {
                 const tokenData = req.body;
@@ -132,16 +189,44 @@ class ProductionServer {
                     success: true,
                     tokenId: mockToken.tokenId,
                     tokenInfo: mockToken,
-                    message: 'Token created successfully (demo mode)',
-                    instructions: {
-                        note: 'This is a demo deployment. Full XRPL integration requires additional setup.'
-                    }
+                    message: 'Token created successfully (demo mode)'
                 });
             } catch (error) {
                 res.status(500).json({
                     success: false,
                     error: error.message,
                     message: 'Failed to create token'
+                });
+            }
+        });
+
+        // Tokens list endpoint
+        this.app.get('/api/tokens', (req, res) => {
+            try {
+                const mockTokens = [
+                    {
+                        tokenId: 'token_demo_1',
+                        currencyCode: 'DEMO',
+                        name: 'Demo Token',
+                        totalSupply: 1000000,
+                        createdAt: new Date().toISOString(),
+                        issuer: 'rDemoIssuer123456789'
+                    }
+                ];
+
+                res.json({
+                    success: true,
+                    data: {
+                        tokens: mockTokens,
+                        count: mockTokens.length
+                    },
+                    message: 'Tokens retrieved successfully (demo mode)'
+                });
+            } catch (error) {
+                res.status(500).json({
+                    success: false,
+                    error: error.message,
+                    message: 'Failed to retrieve tokens'
                 });
             }
         });
@@ -166,7 +251,90 @@ class ProductionServer {
             });
         });
 
-        // Catch-all for frontend routing
+        // Dashboard endpoint
+        this.app.get('/api/dashboard/:address', (req, res) => {
+            try {
+                const { address } = req.params;
+                const mockDashboard = {
+                    balance: {
+                        xrpBalance: (Math.random() * 1000).toFixed(6),
+                        accountData: {
+                            Sequence: Math.floor(Math.random() * 100) + 1,
+                            OwnerCount: Math.floor(Math.random() * 10)
+                        }
+                    },
+                    trustlines: [],
+                    recentTransactions: [],
+                    userTokens: [],
+                    stats: {
+                        totalBalance: parseFloat((Math.random() * 1000).toFixed(6)),
+                        activeTokens: 0,
+                        totalTransactions: 0,
+                        portfolioValue: parseFloat((Math.random() * 500).toFixed(2)),
+                        createdTokens: 0
+                    }
+                };
+
+                res.json({
+                    success: true,
+                    data: mockDashboard,
+                    message: 'Dashboard data retrieved (demo mode)'
+                });
+            } catch (error) {
+                res.status(500).json({
+                    success: false,
+                    error: error.message,
+                    message: 'Failed to retrieve dashboard data'
+                });
+            }
+        });
+
+        // Transactions endpoint
+        this.app.get('/api/transactions/:address', (req, res) => {
+            try {
+                res.json({
+                    success: true,
+                    data: {
+                        transactions: [],
+                        totalCount: 0,
+                        pagination: {
+                            limit: 20,
+                            offset: 0,
+                            hasMore: false
+                        }
+                    },
+                    message: 'Transactions retrieved (demo mode)'
+                });
+            } catch (error) {
+                res.status(500).json({
+                    success: false,
+                    error: error.message,
+                    message: 'Failed to retrieve transactions'
+                });
+            }
+        });
+
+        // Trustlines endpoint
+        this.app.get('/api/trustlines/:address', (req, res) => {
+            try {
+                res.json({
+                    success: true,
+                    data: {
+                        trustlines: [],
+                        totalCount: 0
+                    },
+                    message: 'Trustlines retrieved (demo mode)'
+                });
+            } catch (error) {
+                res.status(500).json({
+                    success: false,
+                    error: error.message,
+                    message: 'Failed to retrieve trustlines'
+                });
+            }
+        });
+
+        // Frontend routing - MUST BE LAST
         this.app.get('*', (req, res) => {
             const frontendIndexPath = path.join(__dirname, '../frontend/build/index.html');
             if (fs.existsSync(frontendIndexPath)) {
@@ -175,6 +343,7 @@ class ProductionServer {
                 res.status(404).json({
                     error: 'Frontend not found',
                     message: 'The frontend application is not available',
+                    buildPath: frontendIndexPath,
                     timestamp: new Date().toISOString()
                 });
             }
@@ -189,16 +358,6 @@ class ProductionServer {
                 success: false,
                 error: 'Internal server error',
                 message: 'An unexpected error occurred',
-                timestamp: new Date().toISOString()
-            });
-        });
-
-        // 404 handler
-        this.app.use((req, res) => {
-            res.status(404).json({
-                success: false,
-                error: 'Not found',
-                message: `Route ${req.method} ${req.path} not found`,
                 timestamp: new Date().toISOString()
             });
         });
@@ -224,16 +383,5 @@ class ProductionServer {
 // Start the server
 const server = new ProductionServer();
 server.start();
-
-// Graceful shutdown
-process.on('SIGTERM', () => {
-    console.log('📥 SIGTERM received, shutting down gracefully');
-    process.exit(0);
-});
-
-process.on('SIGINT', () => {
-    console.log('📥 SIGINT received, shutting down gracefully');
-    process.exit(0);
-});
 
 module.exports = ProductionServer;
