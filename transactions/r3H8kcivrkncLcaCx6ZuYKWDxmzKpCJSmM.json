@@ -1,0 +1,14 @@
+[
+  {
+    "type": "WALLET_IMPORTED",
+    "description": "Wallet imported successfully",
+    "details": {
+      "walletId": "wallet_1754855922318_01681ad3",
+      "address": "r3H8kcivrkncLcaCx6ZuYKWDxmzKpCJSmM",
+      "name": "Imported Wallet 01681ad3"
+    },
+    "status": "SUCCESS",
+    "id": "tx_1754855924537_bj3ooex4w",
+    "timestamp": "2025-08-10T19:58:44.537Z"
+  }
+]

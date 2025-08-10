@@ -1,0 +1,14 @@
+[
+  {
+    "type": "WALLET_CREATED",
+    "description": "Wallet created successfully",
+    "details": {
+      "walletId": "wallet_1754852212888_28231bea",
+      "address": "rH77aa3AD5FcU4CKvGH8u91UdJc5CjoNuN",
+      "name": "Wallet 28231bea"
+    },
+    "status": "SUCCESS",
+    "id": "tx_1754852212944_sbza6vkib",
+    "timestamp": "2025-08-10T18:56:52.944Z"
+  }
+]

@@ -1,0 +1,16 @@
+{
+  "id": "wallet_1754847611828_f3bda845",
+  "address": "rJRkyzrkSkCH4hTzZ163vtJm8M94FsL4Rh",
+  "publicKey": "ED96C3C645DE598A02766AA0655FD2B083B00BEB918968EDD556F34420B003C96E",
+  "network": "TESTNET",
+  "createdAt": "2025-08-10T17:40:11.828Z",
+  "metadata": {
+    "name": "Wallet f3bda845",
+    "description": "",
+    "tags": []
+  },
+  "encrypted": {
+    "privateKey": "EDDAA98B33C6DE13DB60AF657DA19BF73E5FFDED785B790A2431F3DC657BB20B19",
+    "seed": "sEdSmcoySrkX64h9ha1vDd7pJWaX1SZ"
+  }
+}

@@ -1,0 +1,28 @@
+[
+  {
+    "type": "TOKEN_CREATED",
+    "description": "Token TED created",
+    "details": {
+      "tokenId": "token_1754855064722_wgmqfrro9",
+      "currencyCode": "TED",
+      "name": "Tesy",
+      "totalSupply": 12020,
+      "issuer": "rwczEfW1KoCMdGzyrhA2LHseCwnMh5fzdc"
+    },
+    "status": "SUCCESS",
+    "id": "tx_1754855064969_824m6372z",
+    "timestamp": "2025-08-10T19:44:24.969Z"
+  },
+  {
+    "type": "WALLET_CREATED",
+    "description": "Wallet created successfully",
+    "details": {
+      "walletId": "wallet_1754855032420_a4820e72",
+      "address": "rHcsYtKbsW6PxmTGibsyzXXoZGS78sPM2P",
+      "name": "Wallet a4820e72"
+    },
+    "status": "SUCCESS",
+    "id": "tx_1754855032708_pyl0637k6",
+    "timestamp": "2025-08-10T19:43:52.708Z"
+  }
+]

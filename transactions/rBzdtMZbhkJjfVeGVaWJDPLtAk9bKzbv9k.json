@@ -1,0 +1,28 @@
+[
+  {
+    "type": "TOKEN_CREATED",
+    "description": "Token TRY created",
+    "details": {
+      "tokenId": "token_1754852265204_8b5nvh7gz",
+      "currencyCode": "TRY",
+      "name": "POP",
+      "totalSupply": 1000,
+      "issuer": "rDpchzqvvBdL3goWBNQK2ncSPVN44D1jbK"
+    },
+    "status": "SUCCESS",
+    "id": "tx_1754852265436_an349atfq",
+    "timestamp": "2025-08-10T18:57:45.436Z"
+  },
+  {
+    "type": "WALLET_CREATED",
+    "description": "Wallet created successfully",
+    "details": {
+      "walletId": "wallet_1754852223895_2f620f42",
+      "address": "rBzdtMZbhkJjfVeGVaWJDPLtAk9bKzbv9k",
+      "name": "Wallet 2f620f42"
+    },
+    "status": "SUCCESS",
+    "id": "tx_1754852223956_0c0pr4g6b",
+    "timestamp": "2025-08-10T18:57:03.956Z"
+  }
+]

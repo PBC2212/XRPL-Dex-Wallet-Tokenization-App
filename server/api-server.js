@@ -1,6 +1,6 @@
 /**
- * XRPL API Server - Production Ready
- * Enterprise-grade XRPL tokenization and wallet management API
+ * XRPL API Server - Enhanced with Transaction History
+ * Maintains full backward compatibility with existing wallet and token functionality
  */
 
 const express = require('express');
@@ -11,11 +11,12 @@ const rateLimit = require('express-rate-limit');
 const WebSocket = require('ws');
 const http = require('http');
 const compression = require('compression');
+const fs = require('fs-extra');
+const path = require('path');
 require('dotenv').config();
 
 // XRPL modules
 const WalletManager = require('../src/wallet/wallet-manager');
-// const tokenIssuer = require('../src/tokenization/token-issuer'); // removed old system reference
 const TrustlineManager = require('../src/trustlines/trustline-manager');
 const { getXRPLClient } = require('../src/utils/xrpl-client');
 const validators = require('../src/utils/validators');
@@ -32,15 +33,101 @@ class XRPLAPIServer {
         this.clients = new Set();
 
         this.walletManager = new WalletManager();
-        // this.tokenIssuer = tokenIssuer; // old system removed
         this.trustlineManager = new TrustlineManager();
         this.xrplClient = getXRPLClient();
+
+        // NEW: Transaction history storage
+        this.transactionHistory = new Map(); // walletAddress -> transactions[]
+        this.transactionsDir = path.join(process.cwd(), 'transactions');
+        this.initializeTransactionHistory();
 
         this.requestId = 0;
 
         this.setupMiddleware();
         this.setupRoutes();
         this.setupWebSocket();
+    }
+
+    /**
+     * NEW: Initialize transaction history system
+     */
+    async initializeTransactionHistory() {
+        try {
+            await fs.ensureDir(this.transactionsDir);
+            await this.loadTransactionHistory();
+            console.log('📋 Transaction history system initialized');
+        } catch (error) {
+            console.error('Failed to initialize transaction history:', error.message);
+        }
+    }
+
+    /**
+     * NEW: Load transaction history from disk
+     */
+    async loadTransactionHistory() {
+        try {
+            const files = await fs.readdir(this.transactionsDir);
+            const transactionFiles = files.filter(file => file.endsWith('.json'));
+
+            for (const file of transactionFiles) {
+                try {
+                    const filePath = path.join(this.transactionsDir, file);
+                    const transactions = await fs.readJson(filePath);
+                    const address = file.replace('.json', '');
+                    this.transactionHistory.set(address, transactions);
+                } catch (error) {
+                    console.error(`Failed to load transactions for ${file}:`, error.message);
+                }
+            }
+
+            if (this.transactionHistory.size > 0) {
+                console.log(`📁 Loaded transaction history for ${this.transactionHistory.size} addresses`);
+            }
+        } catch (error) {
+            // Directory might not exist yet, that's okay
+        }
+    }
+
+    /**
+     * NEW: Save transaction history to disk
+     */
+    async saveTransactionHistory(address, transactions) {
+        try {
+            const filePath = path.join(this.transactionsDir, `${address}.json`);
+            await fs.writeJson(filePath, transactions, { spaces: 2 });
+        } catch (error) {
+            console.error('Failed to save transaction history:', error.message);
+        }
+    }
+
+    /**
+     * NEW: Add transaction to history
+     */
+    async addTransaction(address, transaction) {
+        if (!this.transactionHistory.has(address)) {
+            this.transactionHistory.set(address, []);
+        }
+
+        const transactions = this.transactionHistory.get(address);
+        transactions.unshift({
+            ...transaction,
+            id: `tx_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            timestamp: new Date().toISOString()
+        });
+
+        // Keep only last 100 transactions per address
+        if (transactions.length > 100) {
+            transactions.splice(100);
+        }
+
+        this.transactionHistory.set(address, transactions);
+        await this.saveTransactionHistory(address, transactions);
+
+        // Broadcast to connected clients
+        this.broadcastToClients({
+            type: 'TRANSACTION_ADDED',
+            data: { address, transaction: transactions[0] }
+        });
     }
 
     setupMiddleware() {
@@ -144,7 +231,7 @@ class XRPLAPIServer {
         };
 
         // ================================
-        // WALLET MANAGEMENT ROUTES
+        // WALLET MANAGEMENT ROUTES (ENHANCED)
         // ================================
 
         router.post('/wallets', async (req, res) => {
@@ -155,6 +242,18 @@ class XRPLAPIServer {
                 
                 const result = await this.walletManager.generateWallet(options);
                 
+                // NEW: Add to transaction history
+                await this.addTransaction(result.walletInfo.address, {
+                    type: 'WALLET_CREATED',
+                    description: 'Wallet created successfully',
+                    details: {
+                        walletId: result.walletInfo.id,
+                        address: result.walletInfo.address,
+                        name: result.walletInfo.metadata.name
+                    },
+                    status: 'SUCCESS'
+                });
+
                 this.broadcastToClients({
                     type: 'WALLET_CREATED',
                     data: { 
@@ -188,6 +287,18 @@ class XRPLAPIServer {
                 if (description) options.description = description;
 
                 const result = await this.walletManager.importWallet(seed, options);
+                
+                // NEW: Add to transaction history
+                await this.addTransaction(result.walletInfo.address, {
+                    type: 'WALLET_IMPORTED',
+                    description: 'Wallet imported successfully',
+                    details: {
+                        walletId: result.walletInfo.id,
+                        address: result.walletInfo.address,
+                        name: result.walletInfo.metadata.name
+                    },
+                    status: 'SUCCESS'
+                });
                 
                 sendResponse(req, res, {
                     id: result.walletInfo.id,
@@ -244,15 +355,31 @@ class XRPLAPIServer {
         });
 
         // ================================
-        // TOKEN MANAGEMENT ROUTES - NEW WORKING SYSTEM
+        // TOKEN MANAGEMENT ROUTES (ENHANCED)
         // ================================
 
         router.post('/tokens', async (req, res) => {
             try {
-                console.log(`📍 [${req.requestId}] POST /api/tokens - Create token (WORKING SYSTEM)`);
-                const userAddress = req.body.metadata?.issuer || 'unknown';
+                console.log(`📍 [${req.requestId}] POST /api/tokens - Create token`);
+                const userAddress = req.body.metadata?.issuer || req.body.issuerAddress || 'unknown';
                 const result = await WorkingTokenSystem.createToken(req.body, userAddress);
                 
+                // NEW: Add to transaction history for the user who created the token
+                if (userAddress !== 'unknown') {
+                    await this.addTransaction(userAddress, {
+                        type: 'TOKEN_CREATED',
+                        description: `Token ${result.tokenInfo.currencyCode} created`,
+                        details: {
+                            tokenId: result.tokenId,
+                            currencyCode: result.tokenInfo.currencyCode,
+                            name: result.tokenInfo.name,
+                            totalSupply: result.tokenInfo.totalSupply,
+                            issuer: result.tokenInfo.issuer
+                        },
+                        status: 'SUCCESS'
+                    });
+                }
+
                 this.broadcastToClients({
                     type: 'TOKEN_CREATED',
                     data: {
@@ -289,27 +416,197 @@ class XRPLAPIServer {
             }
         });
 
-        // Trustline and other routes remain unchanged...
+        // ================================
+        // NEW: TRANSACTION HISTORY ROUTES
+        // ================================
+
+        router.get('/transactions/:address', async (req, res) => {
+            try {
+                const { address } = req.params;
+                const { limit = 20, offset = 0 } = req.query;
+                
+                if (!validators.isValidAddress(address)) {
+                    return sendError(req, res, 'Invalid XRPL address', 'Validation error', 400);
+                }
+
+                // Get local transaction history
+                const localTransactions = this.transactionHistory.get(address) || [];
+                
+                // Apply pagination
+                const startIndex = parseInt(offset);
+                const endIndex = startIndex + parseInt(limit);
+                const paginatedTransactions = localTransactions.slice(startIndex, endIndex);
+
+                sendResponse(req, res, {
+                    transactions: paginatedTransactions,
+                    totalCount: localTransactions.length,
+                    localCount: localTransactions.length,
+                    pagination: {
+                        limit: parseInt(limit),
+                        offset: parseInt(offset),
+                        hasMore: localTransactions.length > endIndex
+                    }
+                }, 'Transactions retrieved successfully');
+            } catch (error) {
+                sendError(req, res, error.message, 'Failed to retrieve transactions');
+            }
+        });
+
+        // ================================
+        // NEW: DASHBOARD DATA ROUTE
+        // ================================
+
+        router.get('/dashboard/:address', async (req, res) => {
+            try {
+                const { address } = req.params;
+                if (!validators.isValidAddress(address)) {
+                    return sendError(req, res, 'Invalid XRPL address', 'Validation error', 400);
+                }
+
+                // Get balance
+                let balance = { xrpBalance: '0', accountData: null };
+                try {
+                    const xrpBalance = await this.xrplClient.getXRPBalance(address);
+                    const accountData = await this.xrplClient.getAccountInfo(address);
+                    balance = { xrpBalance, accountData };
+                } catch (error) {
+                    // Account not found is okay
+                }
+
+                // Get trustlines
+                let trustlines = [];
+                try {
+                    const trustlineResult = await this.trustlineManager.getAllTrustlines(address);
+                    trustlines = trustlineResult.trustlines || [];
+                } catch (error) {
+                    // No trustlines is okay
+                }
+
+                // Get recent transactions
+                const recentTransactions = (this.transactionHistory.get(address) || []).slice(0, 5);
+
+                // Get user's created tokens
+                const userTokens = WorkingTokenSystem.getTokensByUser(address);
+
+                // Calculate stats
+                const stats = {
+                    totalBalance: parseFloat(balance.xrpBalance || 0),
+                    activeTokens: trustlines.filter(tl => parseFloat(tl.balance || 0) > 0).length,
+                    totalTransactions: (this.transactionHistory.get(address) || []).length,
+                    portfolioValue: parseFloat(balance.xrpBalance || 0) * 0.5, // Mock portfolio value
+                    createdTokens: userTokens.length
+                };
+
+                const dashboardData = {
+                    balance,
+                    trustlines,
+                    recentTransactions,
+                    userTokens,
+                    stats
+                };
+
+                sendResponse(req, res, dashboardData, 'Dashboard data retrieved successfully');
+            } catch (error) {
+                sendError(req, res, error.message, 'Failed to retrieve dashboard data');
+            }
+        });
+
         // ================================
         // TRUSTLINE MANAGEMENT ROUTES
         // ================================
 
-        // [Trustline routes here...]
+        router.get('/trustlines/:address', async (req, res) => {
+            try {
+                const { address } = req.params;
+                if (!validators.isValidAddress(address)) {
+                    return sendError(req, res, 'Invalid XRPL address', 'Validation error', 400);
+                }
+
+                const result = await this.trustlineManager.getAllTrustlines(address);
+                sendResponse(req, res, result, 'Trustlines retrieved successfully');
+            } catch (error) {
+                sendError(req, res, error.message, 'Failed to retrieve trustlines');
+            }
+        });
 
         // ================================
-        // GENERAL QUERY ROUTES
+        // NETWORK INFO ROUTES
         // ================================
 
-        // [General query routes here...]
+        router.get('/network/info', async (req, res) => {
+            try {
+                const serverInfo = await this.xrplClient.getClient().request({
+                    command: 'server_info'
+                });
+
+                const networkInfo = {
+                    network: this.xrplClient.getNetworkType().toUpperCase(),
+                    serverInfo: {
+                        validated_ledger: {
+                            seq: serverInfo.result.info.validated_ledger.seq,
+                            hash: serverInfo.result.info.validated_ledger.hash,
+                            reserve_base_xrp: serverInfo.result.info.validated_ledger.reserve_base_xrp,
+                            reserve_inc_xrp: serverInfo.result.info.validated_ledger.reserve_inc_xrp
+                        },
+                        build_version: serverInfo.result.info.build_version,
+                        complete_ledgers: serverInfo.result.info.complete_ledgers
+                    },
+                    connected: this.xrplClient.isClientConnected(),
+                    timestamp: new Date().toISOString()
+                };
+
+                sendResponse(req, res, networkInfo, 'Network info retrieved successfully');
+            } catch (error) {
+                sendError(req, res, error.message, 'Failed to retrieve network info');
+            }
+        });
 
         this.app.use('/api', router);
     }
 
     setupWebSocket() {
         this.server = http.createServer(this.app);
-        this.wss = new WebSocket.Server({ server: this.server });
+        this.wss = new WebSocket.Server({ 
+            server: this.server,
+            path: '/ws'
+        });
 
-        // [WebSocket setup code unchanged...]
+        this.wss.on('connection', (ws, req) => {
+            console.log(`🔌 WebSocket client connected from ${req.socket.remoteAddress}`);
+            this.clients.add(ws);
+
+            ws.on('message', (message) => {
+                try {
+                    const data = JSON.parse(message);
+                    console.log('📨 WebSocket message received:', data.type);
+                    
+                    ws.send(JSON.stringify({
+                        type: 'ACK',
+                        message: 'Message received',
+                        timestamp: new Date().toISOString()
+                    }));
+                } catch (error) {
+                    console.error('❌ WebSocket message error:', error.message);
+                }
+            });
+
+            ws.on('close', (code, reason) => {
+                console.log(`🔌 WebSocket client disconnected: ${code} ${reason}`);
+                this.clients.delete(ws);
+            });
+
+            ws.on('error', (error) => {
+                console.error('🚨 WebSocket error:', error.message);
+                this.clients.delete(ws);
+            });
+
+            // Send welcome message
+            ws.send(JSON.stringify({
+                type: 'CONNECTED',
+                message: 'Connected to XRPL API WebSocket',
+                timestamp: new Date().toISOString()
+            }));
+        });
     }
 
     broadcastToClients(message) {
@@ -328,6 +625,8 @@ class XRPLAPIServer {
             await this.xrplClient.connect();
             this.server.listen(this.port, () => {
                 console.log(`🚀 XRPL API Server listening on port ${this.port}`);
+                console.log(`🌐 WebSocket endpoint: ws://localhost:${this.port}/ws`);
+                console.log(`📋 Transaction history enabled`);
             });
         } catch (error) {
             console.error('❌ Failed to start API server:', error.message);

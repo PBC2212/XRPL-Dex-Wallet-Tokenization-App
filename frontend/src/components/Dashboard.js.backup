@@ -3,23 +3,18 @@ import { Link } from 'react-router-dom';
 import apiService from '../services/apiService';
 
 const Dashboard = ({ currentWallet, networkInfo }) => {
-  // EXISTING STATE (maintained for compatibility)
   const [balance, setBalance] = useState(null);
   const [trustlines, setTrustlines] = useState([]);
   const [recentTransactions, setRecentTransactions] = useState([]);
+  const [createdTokens, setCreatedTokens] = useState([]); // NEW: Track created tokens
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     totalBalance: 0,
     activeTokens: 0,
+    createdTokens: 0, // NEW: Count of created tokens
     totalTransactions: 0,
     portfolioValue: 0
   });
-
-  // NEW STATE for enhanced features
-  const [dashboardData, setDashboardData] = useState(null);
-  const [error, setError] = useState(null);
-  const [refreshing, setRefreshing] = useState(false);
-  const [userTokens, setUserTokens] = useState([]);
 
   // Load dashboard data
   useEffect(() => {
@@ -27,120 +22,79 @@ const Dashboard = ({ currentWallet, networkInfo }) => {
       loadDashboardData();
     } else {
       setLoading(false);
-      resetDashboardState();
     }
   }, [currentWallet]);
-
-  const resetDashboardState = () => {
-    setBalance(null);
-    setTrustlines([]);
-    setRecentTransactions([]);
-    setUserTokens([]);
-    setDashboardData(null);
-    setStats({
-      totalBalance: 0,
-      activeTokens: 0,
-      totalTransactions: 0,
-      portfolioValue: 0
-    });
-  };
 
   const loadDashboardData = async () => {
     if (!currentWallet) return;
 
     try {
       setLoading(true);
-      setError(null);
-      
-      // TRY NEW: Enhanced dashboard endpoint first
-      try {
-        const response = await apiService.getDashboardData(currentWallet.address);
-        
-        if (response && response.success) {
-          const data = response.data;
-          setDashboardData(data);
-          
-          // Update existing state for backward compatibility
-          setBalance(data.balance);
-          setTrustlines(data.trustlines || []);
-          setRecentTransactions(data.recentTransactions || []);
-          setUserTokens(data.userTokens || []);
-          
-          // Enhanced stats
-          setStats({
-            totalBalance: data.stats?.totalBalance || parseFloat(data.balance?.xrpBalance || 0),
-            activeTokens: data.stats?.activeTokens || (data.trustlines || []).filter(tl => parseFloat(tl.balance || 0) > 0).length,
-            totalTransactions: data.stats?.totalTransactions || (data.recentTransactions || []).length,
-            portfolioValue: data.stats?.portfolioValue || parseFloat(data.balance?.xrpBalance || 0) * 0.5,
-            createdTokens: data.stats?.createdTokens || (data.userTokens || []).length
-          });
-          
-          console.log('✅ Dashboard data loaded from enhanced endpoint');
-          return;
-        }
-      } catch (enhancedError) {
-        console.log('Enhanced dashboard endpoint failed, using fallback method');
-      }
-
-      // FALLBACK: Use original individual API calls (maintains existing functionality)
-      console.log('📋 Loading dashboard data using individual API calls...');
       
       // Load balance
       const balanceResponse = await apiService.getBalance(currentWallet.address);
       setBalance(balanceResponse.data);
 
-      // Load trustlines (with error handling for new accounts)
-      let trustlinesData = [];
-      try {
-        const trustlinesResponse = await apiService.getTrustlines(currentWallet.address);
-        trustlinesData = trustlinesResponse.data.trustlines || [];
-      } catch (trustlineError) {
-        console.log('No trustlines found (account may be new)');
-        trustlinesData = [];
-      }
-      setTrustlines(trustlinesData);
+      // Load trustlines
+      const trustlinesResponse = await apiService.getTrustlines(currentWallet.address);
+      setTrustlines(trustlinesResponse.data.trustlines || []);
 
-      // Load recent transactions (with error handling)
-      let transactionsData = [];
-      try {
-        const transactionsResponse = await apiService.getTransactions(currentWallet.address, 5);
-        transactionsData = transactionsResponse.data.transactions || [];
-      } catch (transactionError) {
-        console.log('No transactions found');
-        transactionsData = [];
-      }
-      setRecentTransactions(transactionsData);
+      // Load recent transactions
+      const transactionsResponse = await apiService.getTransactions(currentWallet.address, 5);
+      setRecentTransactions(transactionsResponse.data.transactions || []);
 
-      // Calculate stats using original method
+      // NEW: Load created tokens
+      let tokens = [];
+      let createdCount = 0;
+      try {
+        const tokensResponse = await apiService.getTokens();
+        if (tokensResponse && tokensResponse.success) {
+          tokens = tokensResponse.data.tokens || [];
+          // Filter tokens created by current user
+          const userTokens = tokens.filter(token => 
+            token.createdBy === currentWallet.address || 
+            token.issuer === currentWallet.address
+          );
+          setCreatedTokens(userTokens);
+          createdCount = userTokens.length;
+        }
+      } catch (error) {
+        console.log('No tokens endpoint available yet');
+      }
+
+      // Calculate stats
       const xrpBalance = parseFloat(balanceResponse.data.xrpBalance || 0);
-      const activeTokensCount = trustlinesData.filter(tl => parseFloat(tl.balance) > 0).length;
-      const totalTxCount = transactionsData.length;
+      const activeTokensCount = trustlinesResponse.data.trustlines?.filter(tl => parseFloat(tl.balance) > 0).length || 0;
+      const totalTxCount = transactionsResponse.data.transactions?.length || 0;
 
       setStats({
         totalBalance: xrpBalance,
         activeTokens: activeTokensCount,
+        createdTokens: createdCount, // NEW: Include created tokens count
         totalTransactions: totalTxCount,
-        portfolioValue: xrpBalance * 0.5, // Mock portfolio value
-        createdTokens: 0 // Will be enhanced later
+        portfolioValue: xrpBalance * 0.5 // Mock portfolio value
       });
-
-      console.log('✅ Dashboard data loaded using fallback method');
 
     } catch (error) {
       console.error('Failed to load dashboard data:', error);
-      setError(error.message);
     } finally {
       setLoading(false);
     }
   };
 
-  const refreshData = async () => {
-    setRefreshing(true);
-    await loadDashboardData();
-    setRefreshing(false);
+  const refreshData = () => {
+    loadDashboardData();
   };
 
-  // EXISTING: No wallet connected state (unchanged)
+  // NEW: Format currency code for display
+  const formatCurrencyCode = (code) => {
+    if (code && code.length === 40) {
+      // Handle hex currency codes
+      return code.substring(0, 8) + '...';
+    }
+    return code || 'N/A';
+  };
+
   if (!currentWallet) {
     return (
       <div className="dashboard">
@@ -184,7 +138,6 @@ const Dashboard = ({ currentWallet, networkInfo }) => {
     );
   }
 
-  // EXISTING: Loading state (unchanged)
   if (loading) {
     return (
       <div className="dashboard">
@@ -196,57 +149,27 @@ const Dashboard = ({ currentWallet, networkInfo }) => {
     );
   }
 
-  // NEW: Error state
-  if (error) {
-    return (
-      <div className="dashboard">
-        <div className="error-section">
-          <div className="error-card">
-            <h3>❌ Error Loading Dashboard</h3>
-            <p>{error}</p>
-            <button onClick={loadDashboardData} className="btn btn-primary">
-              Try Again
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="dashboard">
-      {/* ENHANCED: Header with refresh button */}
+      {/* Header */}
       <div className="dashboard-header">
         <div className="header-content">
           <h1>Dashboard</h1>
           <p>Welcome back! Here's your portfolio overview.</p>
         </div>
-        <button 
-          onClick={refreshData} 
-          disabled={refreshing}
-          className="btn btn-secondary"
-        >
-          {refreshing ? (
-            <>
-              <div className="spinner spinner-sm"></div>
-              Refreshing...
-            </>
-          ) : (
-            <>🔄 Refresh</>
-          )}
+        <button onClick={refreshData} className="btn btn-secondary">
+          🔄 Refresh
         </button>
       </div>
 
-      {/* ENHANCED: Stats Grid with new metrics */}
+      {/* Stats Grid */}
       <div className="stats-grid">
         <div className="stat-card">
           <div className="stat-icon">💰</div>
           <div className="stat-content">
             <h3>XRP Balance</h3>
             <p className="stat-value">{apiService.formatXRP(stats.totalBalance)}</p>
-            <span className="stat-change neutral">
-              {balance?.accountData ? 'Active' : 'Not Activated'}
-            </span>
+            <span className="stat-change positive">+0.00%</span>
           </div>
         </div>
 
@@ -259,13 +182,13 @@ const Dashboard = ({ currentWallet, networkInfo }) => {
           </div>
         </div>
 
-        {/* NEW: Created Tokens stat */}
+        {/* NEW: Created Tokens Stat */}
         <div className="stat-card">
           <div className="stat-icon">🏗️</div>
           <div className="stat-content">
             <h3>Created Tokens</h3>
-            <p className="stat-value">{stats.createdTokens || 0}</p>
-            <span className="stat-change neutral">Issued</span>
+            <p className="stat-value">{stats.createdTokens}</p>
+            <span className="stat-change positive">Issued</span>
           </div>
         </div>
 
@@ -274,14 +197,14 @@ const Dashboard = ({ currentWallet, networkInfo }) => {
           <div className="stat-content">
             <h3>Transactions</h3>
             <p className="stat-value">{stats.totalTransactions}</p>
-            <span className="stat-change neutral">Total</span>
+            <span className="stat-change neutral">Recent</span>
           </div>
         </div>
       </div>
 
-      {/* EXISTING: Main Content Grid (enhanced) */}
+      {/* Main Content Grid */}
       <div className="content-grid">
-        {/* Quick Actions - unchanged */}
+        {/* Quick Actions */}
         <div className="panel">
           <div className="panel-header">
             <h3>Quick Actions</h3>
@@ -311,54 +234,24 @@ const Dashboard = ({ currentWallet, networkInfo }) => {
           </div>
         </div>
 
-        {/* Token Holdings - enhanced but backward compatible */}
+        {/* NEW: Your Created Tokens */}
         <div className="panel">
           <div className="panel-header">
-            <h3>Token Holdings</h3>
-            <Link to="/invest" className="panel-link">View All</Link>
-          </div>
-          <div className="token-list">
-            {trustlines.length > 0 ? (
-              trustlines.slice(0, 5).map((trustline, index) => (
-                <div key={index} className="token-item">
-                  <div className="token-icon">{trustline.currency}</div>
-                  <div className="token-info">
-                    <h4>{trustline.currency}</h4>
-                    <p>{apiService.truncateAddress(trustline.account)}</p>
-                  </div>
-                  <div className="token-amount">
-                    <p className="amount">{apiService.formatTokenAmount(trustline.balance, trustline.currency)}</p>
-                    <p className="limit">Limit: {apiService.formatTokenAmount(trustline.limit, trustline.currency)}</p>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="empty-state">
-                <p>No token holdings yet</p>
-                <Link to="/invest" className="btn btn-primary btn-sm">Browse Assets</Link>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* NEW: Created Tokens section */}
-        <div className="panel">
-          <div className="panel-header">
-            <h3>Your Created Tokens</h3>
+            <h3>Your Tokens</h3>
             <Link to="/tokens" className="panel-link">Create New</Link>
           </div>
           <div className="token-list">
-            {userTokens && userTokens.length > 0 ? (
-              userTokens.slice(0, 5).map((token, index) => (
+            {createdTokens.length > 0 ? (
+              createdTokens.slice(0, 5).map((token, index) => (
                 <div key={index} className="token-item">
-                  <div className="token-icon">{token.currencyCode}</div>
+                  <div className="token-icon">🪙</div>
                   <div className="token-info">
                     <h4>{token.name}</h4>
-                    <p>{token.currencyCode} • {token.totalSupply?.toLocaleString()}</p>
+                    <p>{token.currencyCode} • {token.totalSupply?.toLocaleString()} total</p>
                   </div>
                   <div className="token-amount">
-                    <p className="amount">Supply: {token.totalSupply?.toLocaleString()}</p>
-                    <p className="limit">Created: {new Date(token.createdAt).toLocaleDateString()}</p>
+                    <p className="amount">{token.status || 'CREATED'}</p>
+                    <p className="limit">Issuer: {apiService.truncateAddress(token.issuer)}</p>
                   </div>
                 </div>
               ))
@@ -371,7 +264,37 @@ const Dashboard = ({ currentWallet, networkInfo }) => {
           </div>
         </div>
 
-        {/* Recent Activity - enhanced */}
+        {/* Token Holdings */}
+        <div className="panel">
+          <div className="panel-header">
+            <h3>Token Holdings</h3>
+            <Link to="/invest" className="panel-link">View All</Link>
+          </div>
+          <div className="token-list">
+            {trustlines.length > 0 ? (
+              trustlines.slice(0, 5).map((trustline, index) => (
+                <div key={index} className="token-item">
+                  <div className="token-icon">{formatCurrencyCode(trustline.currency)}</div>
+                  <div className="token-info">
+                    <h4>{formatCurrencyCode(trustline.currency)}</h4>
+                    <p>{apiService.truncateAddress(trustline.account)}</p>
+                  </div>
+                  <div className="token-amount">
+                    <p className="amount">{apiService.formatTokenAmount(trustline.balance, trustline.currency)}</p>
+                    <p className="limit">Limit: {apiService.formatTokenAmount(trustline.limit, trustline.currency)}</p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="empty-state">
+                <p>No token holdings yet</p>
+                <Link to="/invest" className="panel-link">Browse Assets</Link>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Recent Activity */}
         <div className="panel">
           <div className="panel-header">
             <h3>Recent Activity</h3>
@@ -382,11 +305,11 @@ const Dashboard = ({ currentWallet, networkInfo }) => {
               recentTransactions.map((tx, index) => (
                 <div key={index} className="activity-item">
                   <div className="activity-icon">
-                    {apiService.getTransactionIcon(tx.type || tx.transaction?.TransactionType)}
+                    {tx.transaction?.TransactionType === 'Payment' ? '💸' : '🔄'}
                   </div>
                   <div className="activity-info">
-                    <h4>{tx.description || tx.transaction?.TransactionType || 'Transaction'}</h4>
-                    <p>{apiService.formatTimestamp(tx.timestamp || tx.transaction?.date)}</p>
+                    <h4>{tx.transaction?.TransactionType || 'Transaction'}</h4>
+                    <p>{apiService.formatTimestamp(tx.transaction?.date)}</p>
                   </div>
                   <div className="activity-amount">
                     <p>{tx.transaction?.Amount ? apiService.formatXRP(tx.transaction.Amount / 1000000) : 'N/A'}</p>
@@ -402,83 +325,31 @@ const Dashboard = ({ currentWallet, networkInfo }) => {
         </div>
       </div>
 
-      {/* ENHANCED: Account & Network Status */}
-      <div className="bottom-grid">
-        {/* Account Information */}
-        <div className="panel">
-          <div className="panel-header">
-            <h3>Account Information</h3>
-          </div>
-          <div className="account-details">
-            <div className="detail-row">
-              <span className="detail-label">Address:</span>
-              <span className="detail-value">{apiService.truncateAddress(currentWallet.address, 10, 8)}</span>
+      {/* Network Status */}
+      {networkInfo && (
+        <div className="network-status-panel">
+          <h3>Network Status</h3>
+          <div className="network-details">
+            <div className="detail">
+              <span className="label">Network:</span>
+              <span className="value">{networkInfo.network || 'TESTNET'}</span>
             </div>
-            <div className="detail-row">
-              <span className="detail-label">Status:</span>
-              <span className="detail-value">
-                {balance?.accountData ? (
-                  <span className="status-indicator status-success">
-                    <span className="status-dot"></span>
-                    Active
-                  </span>
-                ) : (
-                  <span className="status-indicator status-warning">
-                    <span className="status-dot"></span>
-                    Not Activated
-                  </span>
-                )}
+            <div className="detail">
+              <span className="label">Ledger:</span>
+              <span className="value">
+                {networkInfo.serverInfo?.validated_ledger?.seq?.toLocaleString() || 'Available'}
               </span>
             </div>
-            {balance?.accountData && (
-              <>
-                <div className="detail-row">
-                  <span className="detail-label">Sequence:</span>
-                  <span className="detail-value">{balance.accountData.Sequence}</span>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Reserve:</span>
-                  <span className="detail-value">{((balance.accountData.OwnerCount || 0) * 2 + 10).toFixed(6)} XRP</span>
-                </div>
-              </>
-            )}
+            <div className="detail">
+              <span className="label">Base Reserve:</span>
+              <span className="value">
+                {networkInfo.serverInfo?.validated_ledger?.reserve_base_xrp || '10'} XRP
+              </span>
+            </div>
           </div>
         </div>
+      )}
 
-        {/* Network Status */}
-        {networkInfo && (
-          <div className="panel">
-            <div className="panel-header">
-              <h3>Network Status</h3>
-            </div>
-            <div className="network-details">
-              <div className="detail-row">
-                <span className="detail-label">Network:</span>
-                <span className="detail-value">
-                  <span className={`status-indicator status-${networkInfo.network?.toLowerCase() === 'mainnet' ? 'success' : 'warning'}`}>
-                    <span className="status-dot"></span>
-                    {networkInfo.network}
-                  </span>
-                </span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Ledger:</span>
-                <span className="detail-value">{networkInfo.serverInfo?.validated_ledger?.seq?.toLocaleString()}</span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Base Reserve:</span>
-                <span className="detail-value">{networkInfo.serverInfo?.validated_ledger?.reserve_base_xrp} XRP</span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Owner Reserve:</span>
-                <span className="detail-value">{networkInfo.serverInfo?.validated_ledger?.reserve_inc_xrp} XRP</span>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* EXISTING STYLES (maintained for compatibility) */}
       <style jsx>{`
         .dashboard {
           max-width: 1400px;
@@ -580,25 +451,6 @@ const Dashboard = ({ currentWallet, networkInfo }) => {
           padding: 4rem 0;
         }
 
-        .error-section {
-          text-align: center;
-          padding: 4rem 0;
-        }
-
-        .error-card {
-          background: white;
-          border-radius: 12px;
-          padding: 2rem;
-          max-width: 400px;
-          margin: 0 auto;
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-        }
-
-        .error-card h3 {
-          color: #ef4444;
-          margin-bottom: 1rem;
-        }
-
         .stats-grid {
           display: grid;
           grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -650,12 +502,6 @@ const Dashboard = ({ currentWallet, networkInfo }) => {
           grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
           gap: 2rem;
           margin-bottom: 2rem;
-        }
-
-        .bottom-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-          gap: 2rem;
         }
 
         .panel {
@@ -801,63 +647,43 @@ const Dashboard = ({ currentWallet, networkInfo }) => {
           color: #6b7280;
         }
 
-        .account-details,
-        .network-details {
-          padding: 1rem 1.5rem;
+        .network-status-panel {
+          background: white;
+          border-radius: 12px;
+          padding: 1.5rem;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
         }
 
-        .detail-row {
+        .network-status-panel h3 {
+          font-size: 1.25rem;
+          font-weight: 600;
+          color: #1f2937;
+          margin-bottom: 1rem;
+        }
+
+        .network-details {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+          gap: 1rem;
+        }
+
+        .detail {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          padding: 0.75rem 0;
-          border-bottom: 1px solid #f3f4f6;
+          padding: 0.75rem;
+          background: #f8fafc;
+          border-radius: 6px;
         }
 
-        .detail-row:last-child {
-          border-bottom: none;
-        }
-
-        .detail-label {
+        .detail .label {
           font-weight: 500;
           color: #6b7280;
         }
 
-        .detail-value {
+        .detail .value {
           font-weight: 600;
           color: #1f2937;
-        }
-
-        .status-indicator {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          padding: 4px 8px;
-          border-radius: 12px;
-          font-size: 12px;
-          font-weight: 500;
-        }
-
-        .status-success {
-          background-color: #dcfce7;
-          color: #166534;
-        }
-
-        .status-warning {
-          background-color: #fef3c7;
-          color: #92400e;
-        }
-
-        .status-error {
-          background-color: #fee2e2;
-          color: #991b1b;
-        }
-
-        .status-dot {
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
-          background-color: currentColor;
         }
 
         .btn-sm {
@@ -876,8 +702,7 @@ const Dashboard = ({ currentWallet, networkInfo }) => {
             grid-template-columns: repeat(2, 1fr);
           }
           
-          .content-grid,
-          .bottom-grid {
+          .content-grid {
             grid-template-columns: 1fr;
           }
         }

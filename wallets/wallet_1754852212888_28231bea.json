@@ -1,0 +1,16 @@
+{
+  "id": "wallet_1754852212888_28231bea",
+  "address": "rH77aa3AD5FcU4CKvGH8u91UdJc5CjoNuN",
+  "publicKey": "ED395C9DF81D89ACC26314F0B00F2F5D4C94569A5D49982EC6CD55CD8DE31C6D6B",
+  "network": "TESTNET",
+  "createdAt": "2025-08-10T18:56:52.888Z",
+  "metadata": {
+    "name": "Wallet 28231bea",
+    "description": "",
+    "tags": []
+  },
+  "encrypted": {
+    "privateKey": "EDD2FC8C2C2A5E5ECC8EE242970C3B84ED567DB129F25EFF467B520C073022D737",
+    "seed": "sEdVYoA7uQ2oAeJZsS5dutHgMZue8KN"
+  }
+}

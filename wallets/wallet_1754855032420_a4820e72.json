@@ -1,0 +1,16 @@
+{
+  "id": "wallet_1754855032420_a4820e72",
+  "address": "rHcsYtKbsW6PxmTGibsyzXXoZGS78sPM2P",
+  "publicKey": "ED352CF7DABB28E251CC55E00C2532D8228D1808B46B7E51EFEF6FFD94DF1F05FD",
+  "network": "TESTNET",
+  "createdAt": "2025-08-10T19:43:52.421Z",
+  "metadata": {
+    "name": "Wallet a4820e72",
+    "description": "",
+    "tags": []
+  },
+  "encrypted": {
+    "privateKey": "ED72277218EAFF0FD2B49705A481C02EA962D82218FB74532491EF03DE75B961DC",
+    "seed": "sEdTSvxLQCa4VSDtq7AWn21YsqpTCXp"
+  }
+}

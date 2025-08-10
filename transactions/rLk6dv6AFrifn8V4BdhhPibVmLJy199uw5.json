@@ -1,0 +1,28 @@
+[
+  {
+    "type": "TOKEN_CREATED",
+    "description": "Token HGH created",
+    "details": {
+      "tokenId": "token_1754852919135_14s8235ty",
+      "currencyCode": "HGH",
+      "name": "TEST",
+      "totalSupply": 10000,
+      "issuer": "rPye8Hfk4cYsPtsrXrPmNn6REz4wdHWj56"
+    },
+    "status": "SUCCESS",
+    "id": "tx_1754852919151_pc7x6b8vz",
+    "timestamp": "2025-08-10T19:08:39.151Z"
+  },
+  {
+    "type": "WALLET_CREATED",
+    "description": "Wallet created successfully",
+    "details": {
+      "walletId": "wallet_1754852884108_39db3342",
+      "address": "rLk6dv6AFrifn8V4BdhhPibVmLJy199uw5",
+      "name": "Wallet 39db3342"
+    },
+    "status": "SUCCESS",
+    "id": "tx_1754852887168_ghouth8cz",
+    "timestamp": "2025-08-10T19:08:07.168Z"
+  }
+]

@@ -1,0 +1,19 @@
+{
+  "id": "wallet_1754855922318_01681ad3",
+  "address": "r3H8kcivrkncLcaCx6ZuYKWDxmzKpCJSmM",
+  "publicKey": "ED15DD7A6A9AA6D22D91FDD72B04341CFC5D2BF3CF4C041C274A354DB573F80255",
+  "network": "TESTNET",
+  "createdAt": "2025-08-10T19:58:42.329Z",
+  "importedAt": "2025-08-10T19:58:42.329Z",
+  "metadata": {
+    "name": "Imported Wallet 01681ad3",
+    "description": "",
+    "tags": [
+      "imported"
+    ]
+  },
+  "encrypted": {
+    "privateKey": "ED739A74BCFA99F8C00001ECB6EA3C856C64DD555EBE86A8AC3E9526623FD4806B",
+    "seed": "sEdVSWwG5xuQ1vGJj6tCkMk6DfvrsfC"
+  }
+}

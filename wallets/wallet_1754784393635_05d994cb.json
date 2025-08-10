@@ -1,0 +1,16 @@
+{
+  "id": "wallet_1754784393635_05d994cb",
+  "address": "rH5Tq8Lkji97hFWw1LwrRdiY7cibS3P5Me",
+  "publicKey": "ED98CA317AE14293CBD88861875FFEC910F75705EA446C8CF0C8B446A5E02BCAE4",
+  "network": "TESTNET",
+  "createdAt": "2025-08-10T00:06:33.635Z",
+  "metadata": {
+    "name": "Wallet 05d994cb",
+    "description": "",
+    "tags": []
+  },
+  "encrypted": {
+    "privateKey": "ED9D6AB194D126429724F851A94F70F67523CB03EF017FEF8F3CC3D9B67D4D73E3",
+    "seed": "sEdScDbXUuRB76mREsLE9WToRuefKLS"
+  }
+}
