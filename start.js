@@ -1,9 +1,9 @@
 /**
- * Simplified Production Startup Script
+ * Final Production Startup Script
+ * Uses basic HTTP server to avoid Express routing issues
  */
 
 const path = require('path');
-const fs = require('fs');
 
 // Load environment variables
 try {
@@ -21,5 +21,5 @@ console.log('🚀 Starting XRPL Tokenization Platform...');
 console.log(`📊 Environment: ${process.env.NODE_ENV}`);
 console.log(`🔌 Port: ${process.env.PORT}`);
 
-// Start the production server
-require('./server/production-server.js');
+// Start the basic server (no Express routing issues)
+require('./server/basic-server.js');
