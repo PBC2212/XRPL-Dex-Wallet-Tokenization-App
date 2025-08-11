@@ -1,0 +1,12 @@
+{
+  "wallet_1754890541793": {
+    "id": "wallet_1754890541793",
+    "address": "rKKFTNZN742b4LwNNtcrazXKKNvzo8K9Ky",
+    "publicKey": "ED9B62662037F3B21A7D75C24AAE332728569DF61F5E6C926A5EC5B3366A54FF90",
+    "name": "Pop",
+    "description": "Reals",
+    "network": "TESTNET",
+    "createdAt": "2025-08-11T05:35:41.793Z",
+    "createdVia": "CLI"
+  }
+}

@@ -1,0 +1,292 @@
+<!-- Dashboard Header -->
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-chart-line"></i> Dashboard
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="refreshDashboard()">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+        </div>
+        <div class="btn-group">
+            <button type="button" class="btn btn-sm btn-primary" onclick="showCreateTokenModal()">
+                <i class="fas fa-plus"></i> New Token
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- System Status Alert -->
+<% if (typeof error !== 'undefined' && error) { %>
+    <div class="alert alert-danger" role="alert">
+        <i class="fas fa-exclamation-triangle"></i> <strong>System Error:</strong> <%= error %>
+    </div>
+<% } %>
+
+<!-- Stats Cards -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            System Status
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            <% if (systemHealth && systemHealth.success) { %>
+                                <span class="badge bg-success" id="system-status">Online</span>
+                            <% } else { %>
+                                <span class="badge bg-danger" id="system-status">Offline</span>
+                            <% } %>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-server fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Total Tokens
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            <%= stats.totalTokens %>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-coins fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Investment Opportunities
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            <%= stats.totalOpportunities %>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-gem fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Total Market Cap
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            $<%= (stats.totalMarketCap || 0).toLocaleString() %>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content Row -->
+<div class="row">
+    <!-- Recent Tokens -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-coins"></i> Recent Tokens
+                </h6>
+                <a href="/tokens" class="btn btn-sm btn-primary">View All</a>
+            </div>
+            <div class="card-body">
+                <% if (tokens && tokens.length > 0) { %>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Code</th>
+                                    <th>Name</th>
+                                    <th>Supply</th>
+                                    <th>Created</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% tokens.slice(0, 5).forEach(token => { %>
+                                    <tr>
+                                        <td><span class="badge bg-primary"><%= token.currencyCode || token.tokenCode %></span></td>
+                                        <td><%= token.name %></td>
+                                        <td><%= (token.totalSupply || 0).toLocaleString() %></td>
+                                        <td><%= new Date(token.createdAt).toLocaleDateString() %></td>
+                                    </tr>
+                                <% }); %>
+                            </tbody>
+                        </table>
+                    </div>
+                <% } else { %>
+                    <div class="text-center py-4">
+                        <i class="fas fa-coins fa-3x text-gray-300 mb-3"></i>
+                        <p class="text-muted">No tokens created yet</p>
+                        <button class="btn btn-primary" onclick="showCreateTokenModal()">
+                            <i class="fas fa-plus"></i> Create First Token
+                        </button>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+
+    <!-- Investment Opportunities -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-gem"></i> Investment Opportunities
+                </h6>
+                <a href="/investments" class="btn btn-sm btn-success">View All</a>
+            </div>
+            <div class="card-body">
+                <% if (opportunities && opportunities.length > 0) { %>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Token</th>
+                                    <th>Price</th>
+                                    <th>Available</th>
+                                    <th>Category</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% opportunities.slice(0, 5).forEach(opp => { %>
+                                    <tr>
+                                        <td><span class="badge bg-success"><%= opp.currencyCode || opp.symbol %></span></td>
+                                        <td>$<%= opp.currentPrice || '1.00' %></td>
+                                        <td><%= (opp.availableTokens || 0).toLocaleString() %></td>
+                                        <td>
+                                            <% if (opp.category === 'Real Estate') { %>🏠
+                                            <% } else if (opp.category === 'Art & Collectibles') { %>🎨
+                                            <% } else if (opp.category === 'Precious Metals') { %>🥇
+                                            <% } else { %>💎<% } %>
+                                        </td>
+                                    </tr>
+                                <% }); %>
+                            </tbody>
+                        </table>
+                    </div>
+                <% } else { %>
+                    <div class="text-center py-4">
+                        <i class="fas fa-gem fa-3x text-gray-300 mb-3"></i>
+                        <p class="text-muted">No investment opportunities available</p>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- System Information -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-info-circle"></i> System Information
+                </h6>
+            </div>
+            <div class="card-body">
+                <% if (systemHealth && systemHealth.success) { %>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <strong>API Status:</strong><br>
+                            <span class="badge bg-success">Connected</span>
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Network:</strong><br>
+                            <span class="badge bg-info"><%= systemHealth.networkType %></span>
+                        </div>
+                        <div class="col-md-3">
+                            <strong>XRPL Status:</strong><br>
+                            <span class="badge bg-<%= systemHealth.xrplConnected ? 'success' : 'danger' %>">
+                                <%= systemHealth.xrplConnected ? 'Connected' : 'Disconnected' %>
+                            </span>
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Last Updated:</strong><br>
+                            <small class="text-muted"><%= new Date(systemHealth.timestamp).toLocaleString() %></small>
+                        </div>
+                    </div>
+                <% } else { %>
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i> Unable to retrieve system information
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Custom Styles -->
+<style>
+.border-left-primary {
+    border-left: 0.25rem solid #4e73df !important;
+}
+
+.border-left-success {
+    border-left: 0.25rem solid #1cc88a !important;
+}
+
+.border-left-info {
+    border-left: 0.25rem solid #36b9cc !important;
+}
+
+.border-left-warning {
+    border-left: 0.25rem solid #f6c23e !important;
+}
+
+.text-xs {
+    font-size: 0.7rem;
+}
+
+.text-gray-300 {
+    color: #dddfeb !important;
+}
+
+.text-gray-800 {
+    color: #5a5c69 !important;
+}
+</style>
+
+<!-- Dashboard JavaScript -->
+<script>
+async function refreshDashboard() {
+    location.reload();
+}
+
+function showCreateTokenModal() {
+    window.location.href = '/tokens';
+}
+</script>

@@ -1,0 +1,168 @@
+<div class="login-container">
+    <div class="login-card">
+        <div class="login-header">
+            <div class="logo">
+                <i class="fas fa-university fa-3x text-primary"></i>
+            </div>
+            <h2>XRPL RWA Admin</h2>
+            <p class="text-muted">Real World Asset Tokenization Platform</p>
+        </div>
+
+        <% if (typeof error !== 'undefined' && error) { %>
+            <div class="alert alert-danger" role="alert">
+                <i class="fas fa-exclamation-triangle"></i> <%= error %>
+            </div>
+        <% } %>
+
+        <form method="POST" action="/login" class="login-form">
+            <div class="mb-3">
+                <label for="username" class="form-label">
+                    <i class="fas fa-user"></i> Username
+                </label>
+                <input 
+                    type="text" 
+                    class="form-control" 
+                    id="username" 
+                    name="username" 
+                    required 
+                    autocomplete="username"
+                    placeholder="Enter your username"
+                >
+            </div>
+
+            <div class="mb-3">
+                <label for="password" class="form-label">
+                    <i class="fas fa-lock"></i> Password
+                </label>
+                <input 
+                    type="password" 
+                    class="form-control" 
+                    id="password" 
+                    name="password" 
+                    required 
+                    autocomplete="current-password"
+                    placeholder="Enter your password"
+                >
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-lg w-100">
+                <i class="fas fa-sign-in-alt"></i> Sign In
+            </button>
+        </form>
+
+        <div class="login-footer">
+            <div class="demo-credentials">
+                <h6>Demo Credentials:</h6>
+                <div class="credential-item">
+                    <strong>Admin:</strong> admin / admin123
+                </div>
+                <div class="credential-item">
+                    <strong>Manager:</strong> manager / manager123
+                </div>
+            </div>
+
+            <div class="system-info">
+                <small class="text-muted">
+                    <i class="fas fa-shield-alt"></i> Secure XRPL Integration<br>
+                    <i class="fas fa-network-wired"></i> TESTNET Environment
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.login-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.login-card {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+    padding: 40px;
+    width: 100%;
+    max-width: 450px;
+    animation: slideUp 0.6s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.login-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.login-header .logo {
+    margin-bottom: 20px;
+}
+
+.login-header h2 {
+    color: #333;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.login-form .form-control {
+    padding: 12px 15px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    font-size: 16px;
+}
+
+.login-form .form-control:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+.login-form .btn {
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: 600;
+    margin-top: 20px;
+}
+
+.login-footer {
+    margin-top: 30px;
+    text-align: center;
+}
+
+.demo-credentials {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.demo-credentials h6 {
+    color: #666;
+    margin-bottom: 10px;
+}
+
+.credential-item {
+    background: white;
+    padding: 8px 12px;
+    border-radius: 5px;
+    margin: 5px 0;
+    font-size: 14px;
+}
+
+.system-info {
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+}
+</style>

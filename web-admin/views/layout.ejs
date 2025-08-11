@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title || 'XRPL RWA Admin' %></title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/admin.css" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏛️</text></svg>">
+</head>
+<body>
+    <% if (typeof user !== 'undefined' && user) { %>
+        <!-- Navigation -->
+        <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="/dashboard">
+                    <i class="fas fa-university"></i> XRPL RWA Admin
+                </a>
+                
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item">
+                            <a class="nav-link <%= currentPage === 'dashboard' ? 'active' : '' %>" href="/dashboard">
+                                <i class="fas fa-chart-line"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link <%= currentPage === 'wallets' ? 'active' : '' %>" href="/wallets">
+                                <i class="fas fa-wallet"></i> Wallets
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link <%= currentPage === 'tokens' ? 'active' : '' %>" href="/tokens">
+                                <i class="fas fa-coins"></i> Tokens
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link <%= currentPage === 'investments' ? 'active' : '' %>" href="/investments">
+                                <i class="fas fa-gem"></i> Investments
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link <%= currentPage === 'system' ? 'active' : '' %>" href="/system">
+                                <i class="fas fa-cogs"></i> System
+                            </a>
+                        </li>
+                    </ul>
+                    
+                    <ul class="navbar-nav">
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-user"></i> <%= user.name %>
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><span class="dropdown-item-text">Role: <%= user.role %></span></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="/logout"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <div class="container-fluid main-content">
+            <div class="row">
+                <!-- Sidebar (optional, for larger screens) -->
+                <div class="col-md-2 d-none d-md-block sidebar">
+                    <div class="sidebar-sticky">
+                        <h6 class="sidebar-heading">Navigation</h6>
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a class="nav-link <%= currentPage === 'dashboard' ? 'active' : '' %>" href="/dashboard">
+                                    <i class="fas fa-chart-line"></i> Dashboard
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link <%= currentPage === 'wallets' ? 'active' : '' %>" href="/wallets">
+                                    <i class="fas fa-wallet"></i> Wallets
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link <%= currentPage === 'tokens' ? 'active' : '' %>" href="/tokens">
+                                    <i class="fas fa-coins"></i> Tokens
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link <%= currentPage === 'investments' ? 'active' : '' %>" href="/investments">
+                                    <i class="fas fa-gem"></i> Investments
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link <%= currentPage === 'system' ? 'active' : '' %>" href="/system">
+                                    <i class="fas fa-cogs"></i> System
+                                </a>
+                            </li>
+                        </ul>
+
+                        <h6 class="sidebar-heading mt-4">Quick Actions</h6>
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <button class="btn btn-sm btn-primary mb-2 w-100" onclick="showCreateWalletModal()">
+                                    <i class="fas fa-plus"></i> New Wallet
+                                </button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="btn btn-sm btn-success mb-2 w-100" onclick="showCreateTokenModal()">
+                                    <i class="fas fa-plus"></i> New Token
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Page Content -->
+                <main class="col-md-10 ml-sm-auto col-lg-10 px-4 main-panel">
+                    <%- body %>
+                </main>
+            </div>
+        </div>
+    <% } else { %>
+        <!-- Login Layout -->
+        <div class="login-layout">
+            <%- body %>
+        </div>
+    <% } %>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JS -->
+    <script src="/js/admin.js"></script>
+    
+    <!-- Real-time updates -->
+    <script>
+        // Auto-refresh system status every 30 seconds
+        if (typeof user !== 'undefined' && user) {
+            setInterval(async () => {
+                try {
+                    const response = await fetch('/api/health');
+                    const data = await response.json();
+                    updateSystemStatus(data);
+                } catch (error) {
+                    console.warn('Health check failed:', error);
+                }
+            }, 30000);
+        }
+
+        function updateSystemStatus(data) {
+            const statusElement = document.getElementById('system-status');
+            if (statusElement && data.success) {
+                statusElement.className = 'badge bg-success';
+                statusElement.textContent = 'Online';
+            } else if (statusElement) {
+                statusElement.className = 'badge bg-danger';
+                statusElement.textContent = 'Offline';
+            }
+        }
+    </script>
+
+    <!-- Page-specific scripts -->
+    <% if (typeof pageScript !== 'undefined') { %>
+        <%- pageScript %>
+    <% } %>
+</body>
+</html>
