@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import apiService from '../services/apiService';
 
@@ -16,36 +16,27 @@ const Dashboard = ({ currentWallet, networkInfo }) => {
   });
 
   // NEW STATE for enhanced features
-  const [dashboardData, setDashboardData] = useState(null);
+  // Removed dashboardData since it's not being used in the render
   const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [userTokens, setUserTokens] = useState([]);
 
-  // Load dashboard data
-  useEffect(() => {
-    if (currentWallet) {
-      loadDashboardData();
-    } else {
-      setLoading(false);
-      resetDashboardState();
-    }
-  }, [currentWallet]);
-
-  const resetDashboardState = () => {
+  const resetDashboardState = useCallback(() => {
     setBalance(null);
     setTrustlines([]);
     setRecentTransactions([]);
     setUserTokens([]);
-    setDashboardData(null);
+    // Removed dashboardData reset since we removed the state
     setStats({
       totalBalance: 0,
       activeTokens: 0,
       totalTransactions: 0,
       portfolioValue: 0
     });
-  };
+  }, []);
 
-  const loadDashboardData = async () => {
+  // Load dashboard data - wrapped in useCallback to fix dependency warning
+  const loadDashboardData = useCallback(async () => {
     if (!currentWallet) return;
 
     try {
@@ -58,7 +49,7 @@ const Dashboard = ({ currentWallet, networkInfo }) => {
         
         if (response && response.success) {
           const data = response.data;
-          setDashboardData(data);
+          // Removed setDashboardData since we removed the state
           
           // Update existing state for backward compatibility
           setBalance(data.balance);
@@ -132,7 +123,17 @@ const Dashboard = ({ currentWallet, networkInfo }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentWallet]); // Add currentWallet as dependency since it's used in the function
+
+  // Load dashboard data - fixed dependency array
+  useEffect(() => {
+    if (currentWallet) {
+      loadDashboardData();
+    } else {
+      setLoading(false);
+      resetDashboardState();
+    }
+  }, [currentWallet, loadDashboardData, resetDashboardState]);
 
   const refreshData = async () => {
     setRefreshing(true);

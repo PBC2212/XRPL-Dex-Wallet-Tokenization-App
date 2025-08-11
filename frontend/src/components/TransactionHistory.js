@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import apiService from '../services/apiService';
 
 const TransactionHistory = ({ currentWallet }) => {
@@ -18,16 +18,7 @@ const TransactionHistory = ({ currentWallet }) => {
   });
   const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    if (currentWallet) {
-      loadTransactions();
-    } else {
-      setTransactions([]);
-      setLoading(false);
-    }
-  }, [currentWallet, pagination.limit, pagination.offset, filter]);
-
-  const loadTransactions = async (isRefresh = false) => {
+  const loadTransactions = useCallback(async (isRefresh = false) => {
     if (!currentWallet) return;
 
     try {
@@ -83,7 +74,16 @@ const TransactionHistory = ({ currentWallet }) => {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [currentWallet, pagination.limit, pagination.offset, filter]);
+
+  useEffect(() => {
+    if (currentWallet) {
+      loadTransactions();
+    } else {
+      setTransactions([]);
+      setLoading(false);
+    }
+  }, [currentWallet, loadTransactions]);
 
   const handleRefresh = () => {
     setPagination(prev => ({ ...prev, offset: 0 }));

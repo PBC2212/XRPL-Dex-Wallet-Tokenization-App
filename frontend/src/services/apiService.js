@@ -1,18 +1,45 @@
 import axios from 'axios';
 
+// Production API URL configuration
+const getApiBaseUrl = () => {
+  // Use environment variable first, then fallback based on environment
+  if (process.env.REACT_APP_API_URL) {
+    return process.env.REACT_APP_API_URL.endsWith('/api') 
+      ? process.env.REACT_APP_API_URL 
+      : `${process.env.REACT_APP_API_URL}/api`;
+  }
+  
+  // Fallback for different environments
+  const isProduction = process.env.NODE_ENV === 'production';
+  const isLocalhost = window.location.hostname === 'localhost';
+  
+  if (isProduction && !isLocalhost) {
+    // Production deployment - use relative API path
+    return `${window.location.protocol}//${window.location.host}/api`;
+  } else {
+    // Local development
+    return 'http://localhost:3001/api';
+  }
+};
+
 // Create axios instance with production URL support
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:3001/api',
+  baseURL: getApiBaseUrl(),
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
+// Production logging (less verbose in production)
+const isProduction = process.env.NODE_ENV === 'production';
+
 // Request interceptor
 api.interceptors.request.use(
   (config) => {
-    console.log(`API Request: ${config.method?.toUpperCase()} ${config.url}`);
+    if (!isProduction) {
+      console.log(`API Request: ${config.method?.toUpperCase()} ${config.url}`);
+    }
     return config;
   },
   (error) => {
@@ -24,11 +51,15 @@ api.interceptors.request.use(
 // Response interceptor
 api.interceptors.response.use(
   (response) => {
-    console.log(`API Response: ${response.status}`, response.data);
+    if (!isProduction) {
+      console.log(`API Response: ${response.status}`, response.data);
+    }
     return response.data;
   },
   (error) => {
-    console.error('API Error:', error.response?.data || error.message);
+    if (!isProduction) {
+      console.error('API Error:', error.response?.data || error.message);
+    }
 
     if (error.response?.data?.message) {
       throw new Error(error.response.data.message);
@@ -44,7 +75,7 @@ api.interceptors.response.use(
 
 const apiService = {
   // ================================
-  // EXISTING WALLET METHODS (UNCHANGED)
+  // WALLET METHODS
   // ================================
 
   // Generate new wallet
@@ -75,17 +106,6 @@ const apiService = {
     }
   },
 
-  // Export wallet
-  async exportWallet(seed, password) {
-    try {
-      const response = await api.post('/wallets/export', { seed, password });
-      return response;
-    } catch (error) {
-      console.error('Export wallet error:', error);
-      throw error;
-    }
-  },
-
   // Get balance
   async getBalance(address) {
     try {
@@ -98,10 +118,10 @@ const apiService = {
   },
 
   // ================================
-  // NEW: ENHANCED DASHBOARD METHOD
+  // DASHBOARD METHODS
   // ================================
 
-  // Get dashboard data (NEW)
+  // Get dashboard data
   async getDashboardData(address) {
     try {
       const response = await api.get(`/dashboard/${address}`);
@@ -109,7 +129,6 @@ const apiService = {
     } catch (error) {
       console.error('Get dashboard data error:', error);
       // Fallback to individual API calls if dashboard endpoint fails
-      console.log('Falling back to individual API calls...');
       try {
         const [balance, trustlines, transactions] = await Promise.allSettled([
           this.getBalance(address),
@@ -133,25 +152,14 @@ const apiService = {
 
         return { success: true, data: fallbackData };
       } catch (fallbackError) {
-        throw error; // Throw original error if fallback also fails
+        throw error;
       }
     }
   },
 
   // ================================
-  // EXISTING NETWORK & TOKEN METHODS (UNCHANGED)
+  // TOKEN METHODS
   // ================================
-
-  // Get network info
-  async getNetworkInfo() {
-    try {
-      const response = await api.get('/network/info');
-      return response;
-    } catch (error) {
-      console.error('Get network info error:', error);
-      throw error;
-    }
-  },
 
   // Create token
   async createToken(tokenData) {
@@ -165,11 +173,126 @@ const apiService = {
     }
   },
 
+  // Get all tokens
+  async getTokens() {
+    try {
+      const response = await api.get('/tokens');
+      return response;
+    } catch (error) {
+      console.error('Get tokens error:', error);
+      throw error;
+    }
+  },
+
   // ================================
-  // NEW: ENHANCED TRANSACTION METHODS
+  // INVESTMENT PORTAL METHODS
   // ================================
 
-  // Get transactions (ENHANCED)
+  // Get investment opportunities
+  async getInvestmentOpportunities() {
+    try {
+      const response = await api.get('/investments/opportunities');
+      return response;
+    } catch (error) {
+      console.error('Get investment opportunities error:', error);
+      // Fallback to regular tokens if investment endpoint fails
+      try {
+        const tokensResponse = await this.getTokens();
+        if (tokensResponse.success) {
+          // Convert regular tokens to investment opportunities format
+          const opportunities = tokensResponse.data.tokens.map(token => ({
+            ...token,
+            currentPrice: (Math.random() * 10 + 0.1).toFixed(4),
+            availableTokens: Math.floor(token.totalSupply * 0.7),
+            investors: Math.floor(Math.random() * 50) + 1,
+            marketCap: (Math.random() * 1000000).toFixed(2),
+            performance24h: (Math.random() - 0.5) * 20,
+            minInvestment: 10,
+            category: this.getCategoryFromDescription(token.description || token.name),
+            availableForInvestment: true
+          }));
+          
+          return {
+            success: true,
+            data: {
+              opportunities,
+              totalOpportunities: opportunities.length,
+              totalMarketCap: opportunities.reduce((sum, token) => sum + parseFloat(token.marketCap || 0), 0)
+            }
+          };
+        }
+      } catch (fallbackError) {
+        console.error('Investment opportunities fallback failed:', fallbackError);
+      }
+      throw error;
+    }
+  },
+
+  // Create investment trustline
+  async createInvestmentTrustline(investorSeed, tokenCode, issuerAddress, limit = '1000000') {
+    try {
+      const response = await api.post('/investments/create-trustline', {
+        investorSeed,
+        tokenCode,
+        issuerAddress,
+        limit
+      });
+      return response;
+    } catch (error) {
+      console.error('Create investment trustline error:', error);
+      throw error;
+    }
+  },
+
+  // Execute investment
+  async executeInvestment(investmentData) {
+    try {
+      const response = await api.post('/investments/execute', investmentData);
+      return response;
+    } catch (error) {
+      console.error('Execute investment error:', error);
+      throw error;
+    }
+  },
+
+  // Get investment portfolio
+  async getInvestmentPortfolio(address) {
+    try {
+      const response = await api.get(`/investments/portfolio/${address}`);
+      return response;
+    } catch (error) {
+      console.error('Get investment portfolio error:', error);
+      throw error;
+    }
+  },
+
+  // Get token market data
+  async getTokenMarketData(tokenCode, issuer) {
+    try {
+      const response = await api.get(`/investments/market-data/${tokenCode}/${issuer}`);
+      return response;
+    } catch (error) {
+      console.error('Get token market data error:', error);
+      throw error;
+    }
+  },
+
+  // ================================
+  // NETWORK & TRANSACTION METHODS
+  // ================================
+
+  // Get network info
+  async getNetworkInfo() {
+    try {
+      const response = await api.get('/network/info');
+      return response;
+    } catch (error) {
+      console.error('Get network info error:', error);
+      throw error;
+    }
+  },
+
+  // Get transactions
   async getTransactions(address, limit = 20, offset = 0) {
     try {
       const response = await api.get(`/transactions/${address}?limit=${limit}&offset=${offset}`);
@@ -192,62 +315,42 @@ const apiService = {
   },
 
   // ================================
-  // NEW: TOKEN MANAGEMENT METHODS
+  // WEBSOCKET CONNECTION
   // ================================
 
-  // Get token info (NEW)
-  async getToken(tokenId) {
-    try {
-      const response = await api.get(`/tokens/${tokenId}`);
-      return response;
-    } catch (error) {
-      console.error('Get token error:', error);
-      throw error;
-    }
-  },
-
-  // List all tokens (NEW)
-  async getTokens() {
-    try {
-      const response = await api.get('/tokens');
-      return response;
-    } catch (error) {
-      console.error('Get tokens error:', error);
-      throw error;
-    }
-  },
-
-  // ================================
-  // NEW: WEBSOCKET CONNECTION
-  // ================================
-
-  // WebSocket connection (NEW) with production support
+  // WebSocket connection with production support
   connectWebSocket(onMessage, onError) {
     try {
-      // Determine WebSocket URL based on environment
-      const isProduction = process.env.NODE_ENV === 'production' || window.location.hostname !== 'localhost';
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
-      
+      const isLocalhost = window.location.hostname === 'localhost';
       let wsUrl;
-      if (isProduction) {
-        // In production, convert HTTPS API URL to WSS WebSocket URL
-        wsUrl = apiUrl.replace('https://', 'wss://').replace('/api', '/ws');
-      } else {
-        // In development, use localhost WebSocket
+      
+      if (isLocalhost) {
+        // Development
         wsUrl = 'ws://localhost:3001/ws';
+      } else {
+        // Production - convert current URL to WebSocket
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        wsUrl = `${protocol}//${window.location.host}/ws`;
       }
 
-      console.log('Connecting to WebSocket:', wsUrl);
+      if (!isProduction) {
+        console.log('Connecting to WebSocket:', wsUrl);
+      }
+      
       const ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {
-        console.log('📡 WebSocket connected');
+        if (!isProduction) {
+          console.log('📡 WebSocket connected');
+        }
       };
 
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          console.log('📨 WebSocket message:', data);
+          if (!isProduction) {
+            console.log('📨 WebSocket message:', data);
+          }
           if (onMessage) onMessage(data);
         } catch (error) {
           console.error('WebSocket message parse error:', error);
@@ -260,7 +363,9 @@ const apiService = {
       };
 
       ws.onclose = (event) => {
-        console.log('📡 WebSocket closed:', event.code, event.reason);
+        if (!isProduction) {
+          console.log('📡 WebSocket closed:', event.code, event.reason);
+        }
       };
 
       return ws;
@@ -272,7 +377,7 @@ const apiService = {
   },
 
   // ================================
-  // EXISTING UTILITY FUNCTIONS (UNCHANGED)
+  // UTILITY FUNCTIONS
   // ================================
 
   formatXRP(amount) {
@@ -353,10 +458,6 @@ const apiService = {
     }
   },
 
-  // ================================
-  // NEW: ENHANCED UTILITY FUNCTIONS
-  // ================================
-
   formatRelativeTime(timestamp) {
     if (!timestamp) return 'Unknown';
     try {
@@ -381,6 +482,16 @@ const apiService = {
     }
   },
 
+  getCategoryFromDescription(description) {
+    if (!description) return 'Mixed Assets';
+    const desc = description.toLowerCase();
+    if (desc.includes('real estate') || desc.includes('property')) return 'Real Estate';
+    if (desc.includes('art') || desc.includes('collectible')) return 'Art & Collectibles';
+    if (desc.includes('gold') || desc.includes('metal')) return 'Precious Metals';
+    if (desc.includes('business') || desc.includes('company')) return 'Business Equity';
+    return 'Mixed Assets';
+  },
+
   // Status helpers
   getTransactionStatusColor(status) {
     switch (status?.toLowerCase()) {
@@ -397,8 +508,9 @@ const apiService = {
       case 'WALLET_IMPORTED': return '📥';
       case 'TOKEN_CREATED': return '🪙';
       case 'TRUSTLINE_CREATED': return '🤝';
-      case 'PAYMENT': return '💸';
-      case 'ACCOUNT_ACTIVATION': return '✅';
+      case 'Payment': return '💸';
+      case 'TrustSet': return '🤝';
+      case 'OfferCreate': return '📈';
       default: return '🔄';
     }
   },
@@ -432,7 +544,7 @@ const apiService = {
   },
 
   // ================================
-  // NEW: CACHE MANAGEMENT
+  // PRODUCTION PERFORMANCE OPTIMIZATION
   // ================================
 
   _cache: new Map(),
@@ -461,41 +573,9 @@ const apiService = {
     this._cache.clear();
   },
 
-  // ================================
-  // NEW: ENHANCED ERROR HANDLING
-  // ================================
-
-  handleError(error, context = 'API call') {
-    console.error(`${context} failed:`, error);
-
-    if (error.response) {
-      // Server responded with error status
-      const status = error.response.status;
-      const message = error.response.data?.message || error.response.data?.error || error.message;
-      
-      switch (status) {
-        case 400:
-          throw new Error(`Bad request: ${message}`);
-        case 401:
-          throw new Error('Unauthorized access');
-        case 403:
-          throw new Error('Access forbidden');
-        case 404:
-          throw new Error('Resource not found');
-        case 429:
-          throw new Error('Rate limit exceeded. Please try again later.');
-        case 500:
-          throw new Error('Server error. Please try again later.');
-        default:
-          throw new Error(`Request failed: ${message}`);
-      }
-    } else if (error.request) {
-      // Request made but no response received
-      throw new Error('Network error: Unable to connect to server');
-    } else {
-      // Something else happened
-      throw new Error(error.message || 'Unknown error occurred');
-    }
+  // Get API base URL for debugging
+  getApiBaseUrl() {
+    return getApiBaseUrl();
   }
 };
 

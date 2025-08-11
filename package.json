@@ -1,28 +1,33 @@
 {
-  "name": "xrpl-dex-wallet-tokenization-app",
+  "name": "prime-integrity-group-platform",
   "version": "1.0.0",
-  "description": "Production-ready XRPL wallet, tokenization, and trustline management application for real estate and asset tokenization",
+  "description": "Prime Integrity Group - Professional XRPL tokenization platform for real estate and asset tokenization",
   "main": "start.js",
   "scripts": {
     "start": "node start.js",
-    "dev": "nodemon src/app.js",
     "api": "node server/api-server.js",
+    "dev": "nodemon src/app.js",
     "api-dev": "nodemon server/api-server.js",
     "frontend": "cd frontend && npm start",
     "build": "cd frontend && npm install && npm run build",
+    "build:frontend": "cd frontend && npm run build",
     "deploy": "npm run build",
     "postinstall": "cd frontend && npm install",
+    "production": "NODE_ENV=production node server/api-server.js",
     "test": "node examples/test-all.js",
+    "test:production": "NODE_ENV=production npm test",
     "quick-demo": "node examples/quick-demo.js",
     "complete-demo": "node examples/complete-demo.js",
     "wallet-demo": "node examples/wallet-demo.js",
-    "token-demo": "node examples/token-demo.js"
+    "token-demo": "node examples/token-demo.js",
+    "health-check": "curl -f http://localhost:$API_PORT/health || exit 1"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/PBC2212/E-XRPL-Dex-Wallet-Tokenization-App.git"
   },
   "keywords": [
+    "prime-integrity-group",
     "xrpl",
     "blockchain",
     "tokenization",
@@ -34,9 +39,12 @@
     "fractional-ownership",
     "defi",
     "investment-portal",
-    "web-app"
+    "web-app",
+    "professional-platform",
+    "production",
+    "mainnet"
   ],
-  "author": "PBC2212",
+  "author": "Prime Integrity Group (PBC2212)",
   "license": "MIT",
   "type": "commonjs",
   "bugs": {
@@ -64,7 +72,13 @@
     "nodemon": "^3.1.10"
   },
   "engines": {
-    "node": ">=16.0.0",
-    "npm": ">=7.0.0"
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "config": {
+    "production": {
+      "node_env": "production",
+      "api_port": 3001
+    }
   }
 }

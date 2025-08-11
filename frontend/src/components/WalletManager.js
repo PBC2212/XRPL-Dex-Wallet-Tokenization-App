@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import apiService from '../services/apiService';
 
 const WalletManager = ({ currentWallet, onWalletSelect }) => {
@@ -9,13 +9,7 @@ const WalletManager = ({ currentWallet, onWalletSelect }) => {
   const [importSeed, setImportSeed] = useState('');
   const [balance, setBalance] = useState(null);
 
-  useEffect(() => {
-    if (currentWallet) {
-      loadWalletBalance();
-    }
-  }, [currentWallet]);
-
-  const loadWalletBalance = async () => {
+  const loadWalletBalance = useCallback(async () => {
     if (!currentWallet) return;
     try {
       const response = await apiService.getBalance(currentWallet.address);
@@ -25,12 +19,13 @@ const WalletManager = ({ currentWallet, onWalletSelect }) => {
     } catch (error) {
       console.error('Failed to load balance:', error);
     }
-  };
+  }, [currentWallet]);
 
-  const showMessage = (type, content) => {
-    setMessage({ type, content });
-    setTimeout(() => setMessage({ type: '', content: '' }), 5000);
-  };
+  useEffect(() => {
+    if (currentWallet) {
+      loadWalletBalance();
+    }
+  }, [currentWallet, loadWalletBalance]);
 
   const handleCreateWallet = async () => {
     try {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import apiService from '../services/apiService';
 
@@ -17,11 +17,28 @@ const InvestmentPortal = ({ currentWallet }) => {
   });
   const [showInvestModal, setShowInvestModal] = useState(false);
 
-  useEffect(() => {
-    loadAvailableTokens();
+  // Move utility functions inside useCallback or outside component
+  const generateMockPrice = useCallback((token) => {
+    // Generate realistic price based on token supply
+    const basePrice = 1000 / token.totalSupply;
+    return Math.max(0.01, basePrice * (0.5 + Math.random())).toFixed(4);
   }, []);
 
-  const loadAvailableTokens = async () => {
+  const generateMockMarketCap = useCallback((token) => {
+    const price = parseFloat(generateMockPrice(token));
+    return (price * token.totalSupply * 0.3).toFixed(2); // 30% of tokens are traded
+  }, [generateMockPrice]);
+
+  const getAssetCategory = useCallback((description) => {
+    const desc = description.toLowerCase();
+    if (desc.includes('real estate') || desc.includes('property')) return 'Real Estate';
+    if (desc.includes('art') || desc.includes('collectible')) return 'Art & Collectibles';
+    if (desc.includes('gold') || desc.includes('metal')) return 'Precious Metals';
+    if (desc.includes('business') || desc.includes('company')) return 'Business Equity';
+    return 'Mixed Assets';
+  }, []);
+
+  const loadAvailableTokens = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -53,27 +70,11 @@ const InvestmentPortal = ({ currentWallet }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [generateMockPrice, generateMockMarketCap, getAssetCategory]);
 
-  const generateMockPrice = (token) => {
-    // Generate realistic price based on token supply
-    const basePrice = 1000 / token.totalSupply;
-    return Math.max(0.01, basePrice * (0.5 + Math.random())).toFixed(4);
-  };
-
-  const generateMockMarketCap = (token) => {
-    const price = parseFloat(generateMockPrice(token));
-    return (price * token.totalSupply * 0.3).toFixed(2); // 30% of tokens are traded
-  };
-
-  const getAssetCategory = (description) => {
-    const desc = description.toLowerCase();
-    if (desc.includes('real estate') || desc.includes('property')) return 'Real Estate';
-    if (desc.includes('art') || desc.includes('collectible')) return 'Art & Collectibles';
-    if (desc.includes('gold') || desc.includes('metal')) return 'Precious Metals';
-    if (desc.includes('business') || desc.includes('company')) return 'Business Equity';
-    return 'Mixed Assets';
-  };
+  useEffect(() => {
+    loadAvailableTokens();
+  }, [loadAvailableTokens]);
 
   const filteredTokens = availableTokens.filter(token => {
     if (filter.assetType !== 'all' && token.category !== filter.assetType) return false;
@@ -510,373 +511,6 @@ const InvestmentPortal = ({ currentWallet }) => {
         </div>
       )}
 
-      <style jsx>{`
-        .container {
-          max-width: 1400px;
-          margin: 0 auto;
-          padding: 20px;
-        }
-
-        .header-section {
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-start;
-          margin-bottom: 2rem;
-        }
-
-        .preview-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-          gap: 2rem;
-        }
-
-        .preview-card {
-          background: white;
-          border-radius: 12px;
-          padding: 2rem;
-          text-align: center;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-        }
-
-        .preview-icon {
-          font-size: 3rem;
-          margin-bottom: 1rem;
-        }
-
-        .preview-card h4 {
-          font-size: 1.25rem;
-          font-weight: 600;
-          color: #1f2937;
-          margin-bottom: 0.75rem;
-        }
-
-        .preview-card p {
-          color: #6b7280;
-          line-height: 1.5;
-        }
-
-        .filters-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-          gap: 1rem;
-        }
-
-        .stats-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-          gap: 1rem;
-        }
-
-        .stat-card {
-          background: white;
-          border-radius: 8px;
-          padding: 1.5rem;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-          display: flex;
-          align-items: center;
-          gap: 1rem;
-        }
-
-        .stat-icon {
-          font-size: 2rem;
-          opacity: 0.8;
-        }
-
-        .stat-content h3 {
-          font-size: 0.875rem;
-          color: #6b7280;
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-          margin-bottom: 0.5rem;
-        }
-
-        .stat-value {
-          font-size: 1.5rem;
-          font-weight: 700;
-          color: #1f2937;
-          margin: 0;
-        }
-
-        .tokens-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-          gap: 2rem;
-          padding: 2rem;
-        }
-
-        .token-card {
-          background: white;
-          border-radius: 12px;
-          border: 1px solid #e2e8f0;
-          overflow: hidden;
-          transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .token-card:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-        }
-
-        .token-header {
-          padding: 1.5rem;
-          border-bottom: 1px solid #f3f4f6;
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-start;
-        }
-
-        .token-symbol {
-          font-size: 1.5rem;
-          font-weight: 700;
-          color: #3b82f6;
-          margin-bottom: 0.5rem;
-        }
-
-        .token-header h4 {
-          font-size: 1.25rem;
-          font-weight: 600;
-          color: #1f2937;
-          margin-bottom: 0.25rem;
-        }
-
-        .token-category {
-          font-size: 0.875rem;
-          color: #6b7280;
-          background: #f3f4f6;
-          padding: 0.25rem 0.75rem;
-          border-radius: 12px;
-        }
-
-        .token-performance {
-          text-align: right;
-        }
-
-        .performance {
-          font-size: 1.25rem;
-          font-weight: 600;
-          padding: 0.5rem 1rem;
-          border-radius: 8px;
-        }
-
-        .performance.positive {
-          color: #059669;
-          background: #dcfce7;
-        }
-
-        .performance.negative {
-          color: #dc2626;
-          background: #fee2e2;
-        }
-
-        .token-metrics {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 1rem;
-          padding: 1.5rem;
-          border-bottom: 1px solid #f3f4f6;
-        }
-
-        .metric {
-          text-align: center;
-        }
-
-        .metric-label {
-          display: block;
-          font-size: 0.75rem;
-          color: #6b7280;
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-          margin-bottom: 0.25rem;
-        }
-
-        .metric-value {
-          font-size: 1rem;
-          font-weight: 600;
-          color: #1f2937;
-        }
-
-        .token-description {
-          padding: 1.5rem;
-          border-bottom: 1px solid #f3f4f6;
-        }
-
-        .token-description p {
-          color: #6b7280;
-          line-height: 1.5;
-          margin: 0;
-        }
-
-        .token-details {
-          padding: 1.5rem;
-          border-bottom: 1px solid #f3f4f6;
-        }
-
-        .detail-item {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 0.5rem 0;
-          font-size: 0.875rem;
-        }
-
-        .detail-item span:first-child {
-          color: #6b7280;
-        }
-
-        .detail-item span:last-child {
-          color: #1f2937;
-          font-weight: 500;
-        }
-
-        .token-actions {
-          padding: 1.5rem;
-        }
-
-        .btn-full {
-          width: 100%;
-          justify-content: center;
-        }
-
-        .modal-overlay {
-          position: fixed;
-          inset: 0;
-          background: rgba(0, 0, 0, 0.5);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 1000;
-        }
-
-        .modal {
-          background: white;
-          border-radius: 12px;
-          max-width: 500px;
-          width: 90%;
-          max-height: 90vh;
-          overflow-y: auto;
-        }
-
-        .modal-header {
-          padding: 1.5rem;
-          border-bottom: 1px solid #e2e8f0;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
-
-        .modal-header h3 {
-          margin: 0;
-          color: #1f2937;
-        }
-
-        .modal-close {
-          background: none;
-          border: none;
-          font-size: 1.5rem;
-          cursor: pointer;
-          color: #6b7280;
-        }
-
-        .modal-content {
-          padding: 1.5rem;
-        }
-
-        .investment-summary {
-          background: #f8fafc;
-          border-radius: 8px;
-          padding: 1rem;
-          margin-bottom: 1.5rem;
-        }
-
-        .summary-item {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 0.5rem 0;
-          font-size: 0.875rem;
-        }
-
-        .summary-item span:first-child {
-          color: #6b7280;
-        }
-
-        .summary-item span:last-child {
-          color: #1f2937;
-          font-weight: 600;
-        }
-
-        .investment-calculation {
-          background: #eff6ff;
-          border-radius: 8px;
-          padding: 1rem;
-          margin: 1rem 0;
-          text-align: center;
-        }
-
-        .calculation-result {
-          font-size: 1.5rem;
-          font-weight: 700;
-          color: #3b82f6;
-          margin-top: 0.5rem;
-        }
-
-        .modal-actions {
-          display: flex;
-          gap: 1rem;
-          margin-top: 1.5rem;
-        }
-
-        .modal-actions .btn {
-          flex: 1;
-        }
-
-        @media (max-width: 768px) {
-          .container {
-            padding: 16px;
-          }
-
-          .header-section {
-            flex-direction: column;
-            gap: 1rem;
-          }
-
-          .filters-grid {
-            grid-template-columns: 1fr;
-          }
-
-          .stats-grid {
-            grid-template-columns: repeat(2, 1fr);
-          }
-
-          .tokens-grid {
-            grid-template-columns: 1fr;
-            padding: 1rem;
-          }
-
-          .token-metrics {
-            grid-template-columns: 1fr;
-          }
-
-          .modal {
-            width: 95%;
-            margin: 1rem;
-          }
-        }
-
-        @media (max-width: 480px) {
-          .stats-grid {
-            grid-template-columns: 1fr;
-          }
-
-          .preview-grid {
-            grid-template-columns: 1fr;
-          }
-
-          .modal-actions {
-            flex-direction: column;
-          }
-        }
-      `}</style>
     </div>
   );
 };

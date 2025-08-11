@@ -10,11 +10,15 @@ services:
       - key: NODE_ENV
         value: production
       - key: XRPL_NETWORK
-        value: TESTNET
+        value: TESTNET  # Change to MAINNET for live deployment
       - key: XRPL_TESTNET_URL
         value: wss://s.altnet.rippletest.net:51233
       - key: XRPL_MAINNET_URL
         value: wss://xrplcluster.com
+      - key: API_PORT
+        value: 3001
+      - key: FRONTEND_URL
+        value: https://xrpl-tokenization-frontend.onrender.com
       - key: XRPL_DEFAULT_FEE
         value: 12
       - key: XRPL_MAX_FEE
@@ -49,15 +53,47 @@ services:
         value: 32
       - key: WALLET_IV_LENGTH
         value: 16
+      - key: RATE_LIMIT_WINDOW
+        value: 900000
+      - key: RATE_LIMIT_MAX_REQUESTS
+        value: 100
     healthCheckPath: /health
+    autoDeploy: true
+    region: oregon  # or your preferred region
 
   # Frontend Static Site
   - type: static_site
     name: xrpl-tokenization-frontend
     buildCommand: cd frontend && npm install && npm run build
     staticPublishPath: ./frontend/build
+    pullRequestPreviewsEnabled: false  # Disable for production
     envVars:
       - key: NODE_ENV
         value: production
       - key: REACT_APP_API_URL
         value: https://xrpl-tokenization-api.onrender.com
+      - key: REACT_APP_ENVIRONMENT
+        value: production
+      - key: REACT_APP_XRPL_NETWORK
+        value: TESTNET  # Change to MAINNET for live
+    autoDeploy: true
+    region: oregon  # Same region as backend for better performance
+    headers:
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin
+      - path: /*
+        name: Permissions-Policy
+        value: camera=(), microphone=(), geolocation=()
+
+# Optional: Add a database for production data persistence
+# databases:
+#   - name: xrpl-tokenization-db
+#     plan: starter  # Free tier
+#     region: oregon
