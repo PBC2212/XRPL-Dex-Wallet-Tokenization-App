@@ -1,0 +1,70 @@
+Lovable AI Prompt
+
+Build a modern investor information portal for a Real-World Asset (RWA) tokenization business that integrates visually with our XRPL-based backend but handles only the frontend.
+
+Goal: Present our business in a professional, compliance-safe way, explain our process clearly, and drive visitors to our backend at https://your-digitalocean-app-link.com via a strong call-to-action.
+
+Design goals:
+
+Sleek, clean, and professional for a blockchain investment audience
+
+High-conversion design with a prominent “Start Tokenization” button linking to https://your-digitalocean-app-link.com
+
+Responsive on desktop and mobile
+
+Use blockchain, asset, and trust-themed visuals
+
+Ensure all language is compliance-safe and informational only
+
+Sections & Exact Copy to Use:
+
+Hero Section
+Headline: “Empowering Investment in Real-World Assets Through Blockchain”
+Subheading: “Our platform leverages the XRPL network to make asset ownership more transparent, efficient, and accessible — all while maintaining rigorous compliance standards.”
+CTA Button Label: “Start Tokenization” (links to https://your-digitalocean-app-link.com)
+
+About the Platform
+“We connect asset owners and qualified investors through a blockchain-powered framework built on the XRPL network. By tokenizing real-world assets, we enable faster settlement, lower transaction costs, and global accessibility — without compromising on security or compliance.”
+
+Investor Benefits
+
+Fractionalized ownership of real-world assets
+
+24/7 blockchain-based settlement
+
+Transparent tracking of asset-backed tokens
+
+Access to a global liquidity network
+
+Lower entry barriers compared to traditional investment methods
+
+How It Works
+
+Discover Opportunities – Learn about our vetted asset classes and potential investment structures.
+
+Complete Investor Onboarding – Redirect to our backend to complete KYC/AML verification.
+
+Tokenization Process – Backend system creates your wallet, tokenizes the asset, and establishes trustlines on XRPL.
+
+Manage Your Holdings – View token balances and receive updates on asset performance.
+
+Security & Compliance
+“We operate under strict KYC/AML protocols to ensure the legitimacy of all participants and transactions. Our platform aligns with applicable regulatory guidelines to provide investors with a secure, compliant environment for blockchain-based asset interaction.”
+
+Legal Disclaimers
+“This platform is for informational purposes only and does not constitute an offer to sell, a solicitation to buy, or a recommendation for any security or investment product. Participation in any investment opportunity may be subject to eligibility requirements, jurisdictional restrictions, and risk of loss. Please review all documentation and consult your financial advisor before proceeding.”
+
+Contact Form
+
+Fields: Name, Email, Message
+
+Footer:
+“© [Your Company Name] – All Rights Reserved”
+
+Special Instructions for Lovable:
+
+Do not implement XRPL wallet creation or tokenization in Lovable — that is handled by our backend.
+
+Make sure redirection to backend is seamless and secure.
+
+Treat this as production-ready for a live investor audience.
