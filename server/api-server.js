@@ -1098,7 +1098,7 @@ class XRPLAPIServer {
                 console.log('🌐 Closing HTTP server...');
                 this.server.close(() => {
                     console.log('✅ Server shutdown complete');
-                    process.exit(0);
+                    process.exit(0);a
                 });
             }
         } catch (error) {
