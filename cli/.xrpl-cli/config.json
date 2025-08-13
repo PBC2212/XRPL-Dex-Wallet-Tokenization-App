@@ -1,9 +1,9 @@
 {
   "apiUrl": "http://localhost:3001/api",
   "currentWallet": {
-    "id": "wallet_1754890541793",
-    "address": "rKKFTNZN742b4LwNNtcrazXKKNvzo8K9Ky",
-    "name": "Pop"
+    "id": "wallet_1755115250070",
+    "address": "rLPro2aTRzzAvHvh9pjquPNuQ7TNLkpykW",
+    "name": "MATE"
   },
   "createdAt": "2025-08-11T05:18:02.121Z"
 }

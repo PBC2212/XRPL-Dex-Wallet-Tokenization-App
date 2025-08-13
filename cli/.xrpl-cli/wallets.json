@@ -8,5 +8,24 @@
     "network": "TESTNET",
     "createdAt": "2025-08-11T05:35:41.793Z",
     "createdVia": "CLI"
+  },
+  "wallet_1755036916302": {
+    "id": "wallet_1755036916302",
+    "address": "r44X9hCKBLLPWXqYaZQ4ACa24S8v3NGxgd",
+    "publicKey": "EDEB967D800BF3F24C22D47D4179B2E2BC88F28EA52B53062428EC1F29FD731D26",
+    "name": "GCX Token",
+    "description": "Test Token",
+    "network": "TESTNET",
+    "createdAt": "2025-08-12T22:15:16.302Z",
+    "createdVia": "CLI"
+  },
+  "wallet_1755115250070": {
+    "id": "wallet_1755115250070",
+    "address": "rLPro2aTRzzAvHvh9pjquPNuQ7TNLkpykW",
+    "publicKey": "ED30D1B1383F7C41A419399BF7D73889BEFBDAF2BA635AD9F396080396043C91DF",
+    "name": "MATE",
+    "description": "CLI imported wallet",
+    "network": "TESTNET",
+    "createdVia": "CLI Import"
   }
 }

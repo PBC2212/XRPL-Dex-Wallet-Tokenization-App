@@ -187,6 +187,83 @@ class ApiService {
         }
     }
 
+    // Liquidity & DEX Operations
+    async getOrderBook(orderBookData) {
+        try {
+            const params = new URLSearchParams({
+                baseCurrency: orderBookData.baseCurrency,
+                quoteCurrency: orderBookData.quoteCurrency
+            });
+            
+            if (orderBookData.baseIssuer) {
+                params.append('baseIssuer', orderBookData.baseIssuer);
+            }
+            if (orderBookData.quoteIssuer) {
+                params.append('quoteIssuer', orderBookData.quoteIssuer);
+            }
+            
+            const response = await this.client.get(`/dex/orderbook?${params.toString()}`);
+            return response.data;
+        } catch (error) {
+            throw new Error(`Order book retrieval failed: ${error.message}`);
+        }
+    }
+
+    async createOffer(offerData) {
+        try {
+            console.log('💱 Creating DEX offer with data:', offerData);
+            const response = await this.client.post('/dex/offers', offerData);
+            return response.data;
+        } catch (error) {
+            throw new Error(`Offer creation failed: ${error.message}`);
+        }
+    }
+
+    async getMyOffers(address) {
+        try {
+            const response = await this.client.get(`/dex/offers/${address}`);
+            return response.data;
+        } catch (error) {
+            throw new Error(`My offers retrieval failed: ${error.message}`);
+        }
+    }
+
+    async cancelOffer(cancelData) {
+        try {
+            const response = await this.client.post('/dex/offers/cancel', cancelData);
+            return response.data;
+        } catch (error) {
+            throw new Error(`Offer cancellation failed: ${error.message}`);
+        }
+    }
+
+    async getLiquidityStats() {
+        try {
+            const response = await this.client.get('/dex/stats');
+            return response.data;
+        } catch (error) {
+            throw new Error(`Liquidity stats retrieval failed: ${error.message}`);
+        }
+    }
+
+    async getTradingHistory(address, limit = 20) {
+        try {
+            const response = await this.client.get(`/dex/history/${address}?limit=${limit}`);
+            return response.data;
+        } catch (error) {
+            throw new Error(`Trading history failed: ${error.message}`);
+        }
+    }
+
+    async getMarketData(pair) {
+        try {
+            const response = await this.client.get(`/dex/market/${pair}`);
+            return response.data;
+        } catch (error) {
+            throw new Error(`Market data failed: ${error.message}`);
+        }
+    }
+
     // Utility Methods
     formatXRP(amount) {
         const num = parseFloat(amount);

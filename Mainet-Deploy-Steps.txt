@@ -1,0 +1,125 @@
+🚀 Mainnet Deployment Steps
+Here's your step-by-step production deployment process:
+Phase 1: Pre-Production Preparation
+1. Environment Configuration
+E:\XRPL-Dex-Wallet-Tokenization-App\server
+notepad .env
+Add/Update:
+envNODE_ENV=production
+XRPL_NETWORK=MAINNET
+XRPL_MAINNET_URL=wss://xrplcluster.com
+API_PORT=3001
+2. Security Audit
+
+ Code review completed
+ All test transactions successful on testnet
+ Security vulnerabilities patched
+ Private keys properly secured
+ API endpoints secured with authentication
+
+Phase 2: Mainnet Wallet Setup
+1. Create Production Wallets
+bashcd E:\XRPL-Dex-Wallet-Tokenization-App\cli
+node xrpl-cli.js wallet:create --name "Production Issuer Wallet"
+2. Fund Production Wallets
+
+Purchase XRP from licensed exchange (Coinbase, Kraken, etc.)
+Send minimum 15-20 XRP to your issuer wallet for:
+
+Account activation (10 XRP reserve)
+Transaction fees
+Token operations
+
+
+
+Phase 3: Network Switch
+1. Update Server Environment
+bash# In server directory
+set NODE_ENV=production
+set XRPL_NETWORK=MAINNET
+npm start
+2. Verify Mainnet Connection
+bashcd E:\XRPL-Dex-Wallet-Tokenization-App\cli
+node xrpl-cli.js health
+Should show: "Network: MAINNET"
+Phase 4: Production Testing
+1. Test Small Token Creation
+bashnode xrpl-cli.js token:create --name "Test Production Token" --code "TEST" --supply 100
+2. Verify on XRPL Explorer
+
+Visit: https://livenet.xrpl.org/
+Search your wallet address
+Confirm token appears on mainnet
+
+Phase 5: Legal & Compliance
+Before major deployments:
+
+ Legal review of tokenization structure
+ Regulatory compliance check
+ Terms of service for investors
+ KYC/AML procedures if required
+ Insurance considerations
+
+Phase 6: Production Operations
+1. Create Real Asset Tokens
+bashnode xrpl-cli.js token:create \
+  --name "123 Main Street Property" \
+  --code "MAIN123" \
+  --supply 1000000 \
+  --description "Commercial property tokenization"
+2. Monitor Operations
+bashnode xrpl-cli.js network:status
+node xrpl-cli.js token:list
+Phase 7: Investor Onboarding
+For each investor:
+
+They create XRPL wallet (via your CLI or XUMM wallet)
+They fund wallet with XRP for activation
+Create trustline to your token:
+
+bashnode xrpl-cli.js invest:trustline --currency MAIN123 --issuer YOUR_ADDRESS
+
+Purchase tokens via payment transactions
+
+🚨 Critical Mainnet Warnings:
+1. Real Money: All XRP transactions use real money
+ 2. Irreversible: Mainnet transactions cannot be undone
+ 3. Regulations: Comply with securities laws in your jurisdiction
+ 4. Backup: Secure backup of all wallet seeds/private keys
+ 5. Insurance: Consider professional liability insurance
+📋 Pre-Mainnet Checklist:
+
+ All testnet testing completed successfully
+ Legal compliance review done
+ Production wallets funded with XRP
+ Team trained on mainnet procedures
+ Backup and recovery procedures tested
+ Incident response plan ready
+ Customer support processes established
+
+🔒 Security for Mainnet:
+1. Hot/Cold Wallet Strategy:
+
+Hot Wallet: Small amounts for daily operations
+Cold Wallet: Bulk funds stored offline
+
+2. Multi-signature setup:
+
+Consider multi-sig wallets for large amounts
+Require multiple team members to authorize large transactions
+
+3. Monitoring:
+
+Set up alerts for all wallet transactions
+Daily balance reconciliation
+Real-time monitoring of token issuance
+
+💡 Recommended Mainnet Workflow:
+Start Small:
+
+Deploy one small test token first
+Verify everything works correctly
+Gradually scale up operations
+Monitor and optimize
+
+Are you ready to switch to mainnet, or do you want to do more testnet testing first?

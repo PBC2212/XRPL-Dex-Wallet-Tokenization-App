@@ -183,6 +183,39 @@ class XRPLCli {
             .description('📊 View investment portfolio')
             .action(this.handleInvestPortfolio.bind(this));
 
+        // Liquidity & DEX commands
+        this.program
+            .command('liquidity:book')
+            .description('📊 View XRPL DEX order book')
+            .option('-p, --pair <pair>', 'Trading pair (e.g., CONDO/XRP)')
+            .action(this.handleLiquidityBook.bind(this));
+
+        this.program
+            .command('liquidity:create')
+            .description('💱 Create DEX offer')
+            .option('-s, --sell <currency>', 'Currency to sell')
+            .option('-b, --buy <currency>', 'Currency to buy')
+            .option('-a, --amount <amount>', 'Amount to sell')
+            .option('-p, --price <price>', 'Price per unit')
+            .option('-t, --type <type>', 'Order type (limit/market)')
+            .action(this.handleLiquidityCreate.bind(this));
+
+        this.program
+            .command('liquidity:orders')
+            .description('📋 List my active offers')
+            .action(this.handleLiquidityOrders.bind(this));
+
+        this.program
+            .command('liquidity:cancel')
+            .description('❌ Cancel DEX offer')
+            .option('-s, --sequence <seq>', 'Offer sequence number')
+            .action(this.handleLiquidityCancel.bind(this));
+
+        this.program
+            .command('liquidity:stats')
+            .description('📈 View liquidity analytics')
+            .action(this.handleLiquidityStats.bind(this));
+
         // Network commands
         this.program
             .command('network:status')
@@ -228,6 +261,13 @@ class XRPLCli {
         console.log('  invest:purchase          Purchase tokens');
         console.log('  invest:portfolio         View portfolio\n');
         
+        console.log('💱 Liquidity & DEX Operations:');
+        console.log('  liquidity:book           View order book');
+        console.log('  liquidity:create         Create DEX offer');
+        console.log('  liquidity:orders         List my offers');
+        console.log('  liquidity:cancel         Cancel offer');
+        console.log('  liquidity:stats          Market analytics\n');
+        
         console.log('🌐 Network Operations:');
         console.log('  network:status           Network status');
         console.log('  network:info             Detailed network info\n');
@@ -236,6 +276,7 @@ class XRPLCli {
         console.log('  node xrpl-cli.js setup');
         console.log('  node xrpl-cli.js wallet:create --name "My Wallet"');
         console.log('  node xrpl-cli.js token:create --name "Miami Condo" --code "CONDO"');
+        console.log('  node xrpl-cli.js liquidity:book --pair "CONDO/XRP"');
     }
 
     async loadConfig() {
@@ -311,6 +352,7 @@ class XRPLCli {
                         { name: '🎯 Select active wallet', value: 'select_wallet' },
                         { name: '🪙 Create RWA token', value: 'create_token' },
                         { name: '📜 List tokens', value: 'list_tokens' },
+                        { name: '💱 View DEX order book', value: 'liquidity_book' },
                         { name: '🏥 Check system health', value: 'health' },
                         { name: '❌ Exit setup', value: 'exit' }
                     ]
@@ -319,6 +361,7 @@ class XRPLCli {
 
             const walletCommands = new (require('./commands/wallet-commands'))(CLI_CONFIG_DIR);
             const tokenCommands = new (require('./commands/token-commands'))(CLI_CONFIG_DIR);
+            const liquidityCommands = new (require('./commands/liquidity-commands'))(CLI_CONFIG_DIR);
 
             switch (action) {
                 case 'create_wallet':
@@ -335,6 +378,9 @@ class XRPLCli {
                     break;
                 case 'list_tokens':
                     await tokenCommands.listTokens();
+                    break;
+                case 'liquidity_book':
+                    await liquidityCommands.viewOrderBook();
                     break;
                 case 'health':
                     await this.handleHealthCheck();
@@ -452,6 +498,32 @@ class XRPLCli {
     async handleInvestPortfolio() {
         const investmentCommands = new (require('./commands/investment-commands'))(CLI_CONFIG_DIR);
         await investmentCommands.viewPortfolio();
+    }
+
+    // Liquidity commands - Real implementations
+    async handleLiquidityBook(options) {
+        const liquidityCommands = new (require('./commands/liquidity-commands'))(CLI_CONFIG_DIR);
+        await liquidityCommands.viewOrderBook(options);
+    }
+
+    async handleLiquidityCreate(options) {
+        const liquidityCommands = new (require('./commands/liquidity-commands'))(CLI_CONFIG_DIR);
+        await liquidityCommands.createOffer(options);
+    }
+
+    async handleLiquidityOrders() {
+        const liquidityCommands = new (require('./commands/liquidity-commands'))(CLI_CONFIG_DIR);
+        await liquidityCommands.listMyOffers();
+    }
+
+    async handleLiquidityCancel(options) {
+        const liquidityCommands = new (require('./commands/liquidity-commands'))(CLI_CONFIG_DIR);
+        await liquidityCommands.cancelOffer(options);
+    }
+
+    async handleLiquidityStats() {
+        const liquidityCommands = new (require('./commands/liquidity-commands'))(CLI_CONFIG_DIR);
+        await liquidityCommands.showLiquidityStats();
     }
 
     // Network commands (placeholders for next step)
